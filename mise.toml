@@ -1,0 +1,58 @@
+[settings]
+experimental = true
+
+[tools]
+node = "22.23.5"
+hk = "2.12.0"
+pitchfork = "2.34.0"
+
+[env]
+API_PORT = "3001"
+
+[daemons.api]
+run = "exec npm run dev:api"
+ready_port = 3001
+
+[daemons.web]
+run = "exec npm run dev:web"
+ready_port = 5173
+
+[daemon_groups]
+default = ["api", "web"]
+
+[tasks.install]
+description = "Install project dependencies"
+run = "npm install"
+
+[tasks.contract]
+description = "Regenerate OpenAPI contract and typed SDK"
+run = "npm run contract"
+
+[tasks.dev]
+description = "Start API and web dev servers as daemons"
+daemons = ["api", "web"]
+run = "mise daemons status"
+
+[tasks.test]
+description = "Run tests once"
+run = "npm test"
+
+[tasks.typecheck]
+description = "Type-check the whole project"
+run = "npm run typecheck"
+
+[tasks.lint]
+description = "Run oxlint"
+run = "npm run lint"
+
+[tasks.check]
+description = "Run lint, typecheck and tests (used by CI and hk)"
+depends = ["lint", "typecheck", "test"]
+
+[tasks.build]
+description = "Type-check and build for production"
+run = "npm run build"
+
+[tasks.preview]
+description = "Preview the production build"
+run = "npm run preview"

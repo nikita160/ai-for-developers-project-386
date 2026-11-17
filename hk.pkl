@@ -1,0 +1,17 @@
+amends "package://github.com/jdx/hk/releases/download/v2.12.0/hk@2.12.0#/Config.pkl"
+
+steps {
+  ["project-checks"] = new Step {
+    check = "mise run check"
+  }
+}
+
+hooks {
+  ["commit-msg"] {
+    steps {
+      ["conventional-commit"] = new Step {
+        check = "hk util check-conventional-commit {{commit_msg_file}}"
+      }
+    }
+  }
+}
