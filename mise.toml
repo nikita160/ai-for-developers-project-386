@@ -11,11 +11,9 @@ API_PORT = "3001"
 
 [daemons.api]
 run = "exec npm run dev:api"
-ready_port = 3001
 
 [daemons.web]
 run = "exec npm run dev:web"
-ready_port = 5173
 
 [daemon_groups]
 default = ["api", "web"]
@@ -31,7 +29,7 @@ run = "npm run contract"
 [tasks.dev]
 description = "Start API and web dev servers as daemons"
 daemons = ["api", "web"]
-run = "mise daemons status"
+run = "echo 'API: http://localhost:3001  Web: http://localhost:5173'"
 
 [tasks.test]
 description = "Run tests once"
