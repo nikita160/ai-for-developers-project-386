@@ -28,6 +28,10 @@ run = "npm install"
 description = "Regenerate OpenAPI contract and typed SDK"
 run = "npm run contract"
 
+[tasks."contract:check"]
+description = "Fail if generated contract or SDK differs from TypeSpec"
+run = "npm run contract:check"
+
 [tasks.dev]
 description = "Start API and web dev servers as daemons"
 daemons = ["api", "web"]

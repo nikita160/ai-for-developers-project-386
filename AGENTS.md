@@ -8,6 +8,7 @@
 - `mise run check` — линтер + проверка типов + тесты; эту же команду запускает CI
 - `mise run test`, `mise run lint`, `mise run typecheck` — отдельные проверки
 - `mise run contract` — перегенерировать `contract/openapi.yaml` и типизированный SDK
+- `mise run contract:check` — проверить, что сгенерированные файлы совпадают с TypeSpec (падает на диффе)
 
 ## Устройство
 
