@@ -27,6 +27,8 @@
 
 Инженерные скиллы Мэтта Покока лежат в `.agents/skills/` (версии — в `skills-lock.json`). В OpenCode слэш-команд нет: вызывайте скилл просьбой («Запусти скилл wayfinder») или ссылкой `@.agents/skills/wayfinder/SKILL.md`.
 
+Скиллы с `disable-model-invocation` дополнительно помечены `metadata.opencode/autoinvoke: true`, чтобы OpenCode показывал их в списке доступных. После `npx skills update` проверьте, что эта метка на месте.
+
 Цикл работы: `grill-with-docs` → `to-spec` → `to-tickets` → `implement-spec`; настройка репозитория — `setup-matt-pocock-skills`.
 
 ### Issue tracker
