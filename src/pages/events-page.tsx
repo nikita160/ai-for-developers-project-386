@@ -13,6 +13,8 @@ import {
   formatSlotRange,
   moscowDateOf,
 } from '@/lib/booking'
+import { errorMessage } from '@/lib/errors'
+import { meetingTypeName } from '@/lib/meeting-types'
 
 export function EventsPage() {
   const [bookings, setBookings] = useState<Booking[]>([])
@@ -33,11 +35,7 @@ export function EventsPage() {
       })
       .catch((cause) => {
         if (!controller.signal.aborted) {
-          setError(
-            cause instanceof Error
-              ? cause.message
-              : 'Не удалось загрузить события',
-          )
+          setError(errorMessage(cause))
         }
       })
       .finally(() => {
@@ -73,9 +71,7 @@ export function EventsPage() {
                 <p className="text-base font-semibold">{booking.name}</p>
                 <p className="text-sm text-muted-foreground">{booking.email}</p>
                 <p className="mt-3 text-sm text-muted-foreground">
-                  Тип:{' '}
-                  {types.find((type) => type.id === booking.typeId)?.name ??
-                    booking.typeId}
+                  Тип: {meetingTypeName(types, booking.typeId)}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   Слот:{' '}

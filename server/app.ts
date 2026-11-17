@@ -1,19 +1,17 @@
+import type { Context } from 'hono'
 import { Hono } from 'hono'
 
 import {
+  bookingError,
   createBooking,
   getAvailability,
   getSlots,
-  type AvailabilityDay,
-  type Booking,
-  type BookingError,
   type BookingStore,
   type CreateBookingInput,
-  type Slot,
 } from './domain/bookings'
 import { findMeetingType, MEETING_TYPES } from './domain/meeting-types'
 import { isDateInWindow } from './domain/slots'
-import { formatMoscowIso } from './domain/time'
+import { serializeBooking, serializeSlot } from './serializers'
 import { InMemoryBookingStore } from './store'
 
 export type AppDeps = {
@@ -43,43 +41,37 @@ export function createApp({
     const type = findMeetingType(c.req.query('type') ?? '')
 
     if (!type) {
-      return c.json(
-        errorBody('validation_error', 'Неизвестный тип встречи', {
-          field: 'type',
-        }),
-        400,
-      )
+      return unknownType(c)
     }
 
-    return c.json(
-      getAvailability(now(), type, store.list()).map(serializeAvailabilityDay),
-    )
+    return c.json(getAvailability(now(), type, store.list()))
   })
 
   app.get('/slots', (c) => {
     const type = findMeetingType(c.req.query('type') ?? '')
 
     if (!type) {
-      return c.json(
-        errorBody('validation_error', 'Неизвестный тип встречи', {
-          field: 'type',
-        }),
-        400,
-      )
+      return unknownType(c)
     }
 
     const date = c.req.query('date')
 
     if (!date) {
       return c.json(
-        errorBody('validation_error', 'Укажите дату', { field: 'date' }),
+        {
+          error: bookingError('validation_error', 'Укажите дату', {
+            field: 'date',
+          }),
+        },
         400,
       )
     }
 
     if (!isDateInWindow(date, now())) {
       return c.json(
-        errorBody('date_out_of_window', 'Дата вне окна записи'),
+        {
+          error: bookingError('date_out_of_window', 'Дата вне окна записи'),
+        },
         400,
       )
     }
@@ -96,14 +88,18 @@ export function createApp({
       body = await c.req.json()
     } catch {
       return c.json(
-        errorBody('validation_error', 'Некорректное тело запроса'),
+        {
+          error: bookingError('validation_error', 'Некорректное тело запроса'),
+        },
         400,
       )
     }
 
     if (!isBookingRequest(body)) {
       return c.json(
-        errorBody('validation_error', 'Некорректное тело запроса'),
+        {
+          error: bookingError('validation_error', 'Некорректное тело запроса'),
+        },
         400,
       )
     }
@@ -120,12 +116,12 @@ export function createApp({
   })
 
   app.get('/bookings', (c) => {
-    const upcoming = c.req.query('upcoming') === 'true'
+    const upcoming = c.req.query('upcoming') !== 'false'
     const current = now().getTime()
 
     const bookings = store
       .list()
-      .filter((booking) => !upcoming || booking.start.getTime() >= current)
+      .filter((booking) => !upcoming || booking.end.getTime() >= current)
       .sort((a, b) => a.start.getTime() - b.start.getTime())
 
     return c.json(bookings.map(serializeBooking))
@@ -137,6 +133,17 @@ export function createApp({
 export const app = createApp()
 
 export type AppType = typeof app
+
+function unknownType(c: Context) {
+  return c.json(
+    {
+      error: bookingError('validation_error', 'Неизвестный тип встречи', {
+        field: 'type',
+      }),
+    },
+    400,
+  )
+}
 
 function isBookingRequest(body: unknown): body is CreateBookingInput {
   if (typeof body !== 'object' || body === null) {
@@ -151,41 +158,4 @@ function isBookingRequest(body: unknown): body is CreateBookingInput {
     typeof candidate.name === 'string' &&
     typeof candidate.email === 'string'
   )
-}
-
-function errorBody(
-  code: BookingError['code'],
-  message: string,
-  details?: Record<string, string>,
-) {
-  return {
-    error: details ? { code, message, details } : { code, message },
-  }
-}
-
-function serializeBooking(booking: Booking) {
-  return {
-    id: booking.id,
-    typeId: booking.typeId,
-    start: formatMoscowIso(booking.start),
-    end: formatMoscowIso(booking.end),
-    name: booking.name,
-    email: booking.email,
-    createdAt: booking.createdAt.toISOString(),
-  }
-}
-
-function serializeSlot(slot: Slot) {
-  return {
-    start: formatMoscowIso(slot.start),
-    end: formatMoscowIso(slot.end),
-    available: slot.available,
-  }
-}
-
-function serializeAvailabilityDay(day: AvailabilityDay) {
-  return {
-    date: day.date,
-    freeStarts: day.freeStarts,
-  }
 }

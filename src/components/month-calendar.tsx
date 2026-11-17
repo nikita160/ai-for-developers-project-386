@@ -66,8 +66,8 @@ export function MonthCalendar({
       <div className="mt-1.5 grid grid-cols-7 gap-1.5">
         {days.map((day) => {
           const freeStarts = availability[day.iso]
-          const isInWindow = freeStarts !== undefined
-          const isAvailable = isInWindow && freeStarts > 0
+          const hasAvailability = freeStarts !== undefined
+          const isAvailable = hasAvailability && freeStarts > 0
           const isSelected = selectedDate === day.iso
 
           return (
@@ -90,7 +90,7 @@ export function MonthCalendar({
                   isSelected && 'text-primary/80',
                 )}
               >
-                {isInWindow ? `${freeStarts} св.` : ''}
+                {hasAvailability ? `${freeStarts} св.` : ''}
               </span>
             </button>
           )

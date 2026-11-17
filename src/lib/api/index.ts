@@ -1,3 +1,4 @@
+import { ApiError } from '../errors'
 import { createApiClient } from './client'
 import type { components } from './schema'
 
@@ -7,51 +8,23 @@ export type Slot = components['schemas']['Slot']
 export type Booking = components['schemas']['Booking']
 export type BookingRequest = components['schemas']['BookingRequest']
 
-export class ApiError extends Error {
-  readonly status: number
-  readonly code?: string
-
-  constructor(message: string, status: number, code?: string) {
-    super(message)
-    this.name = 'ApiError'
-    this.status = status
-    this.code = code
-  }
-}
-
 export const api = createApiClient(import.meta.env.VITE_API_BASE_URL ?? '/api')
 
 export async function getHealth(signal?: AbortSignal) {
-  const { data, error, response } = await api.GET('/health', { signal })
-
-  if (error || !data) {
-    throw toApiError(error, response)
-  }
-
-  return data
+  return unwrap(await api.GET('/health', { signal }))
 }
 
 export async function getMeetingTypes(signal?: AbortSignal) {
-  const { data, error, response } = await api.GET('/meeting-types', { signal })
-
-  if (error || !data) {
-    throw toApiError(error, response)
-  }
-
-  return data
+  return unwrap(await api.GET('/meeting-types', { signal }))
 }
 
 export async function getAvailability(typeId: string, signal?: AbortSignal) {
-  const { data, error, response } = await api.GET('/availability', {
-    params: { query: { type: typeId } },
-    signal,
-  })
-
-  if (error || !data) {
-    throw toApiError(error, response)
-  }
-
-  return data
+  return unwrap(
+    await api.GET('/availability', {
+      params: { query: { type: typeId } },
+      signal,
+    }),
+  )
 }
 
 export async function getSlots(
@@ -59,49 +32,54 @@ export async function getSlots(
   date: string,
   signal?: AbortSignal,
 ) {
-  const { data, error, response } = await api.GET('/slots', {
-    params: { query: { type: typeId, date } },
-    signal,
-  })
-
-  if (error || !data) {
-    throw toApiError(error, response)
-  }
-
-  return data
+  return unwrap(
+    await api.GET('/slots', {
+      params: { query: { type: typeId, date } },
+      signal,
+    }),
+  )
 }
 
 export async function createBooking(input: BookingRequest) {
-  const { data, error, response } = await api.POST('/bookings', { body: input })
-
-  if (error || !data) {
-    throw toApiError(error, response)
-  }
-
-  return data
+  return unwrap(await api.POST('/bookings', { body: input }))
 }
 
 export async function getUpcomingBookings(signal?: AbortSignal) {
-  const { data, error, response } = await api.GET('/bookings', {
-    params: { query: { upcoming: true } },
-    signal,
-  })
+  return unwrap(
+    await api.GET('/bookings', {
+      params: { query: { upcoming: true } },
+      signal,
+    }),
+  )
+}
 
-  if (error || !data) {
-    throw toApiError(error, response)
+async function unwrap<T>(result: {
+  data?: T
+  error?: unknown
+  response: Response
+}): Promise<T> {
+  if (result.error || result.data === undefined) {
+    throw toApiError(result.error, result.response)
   }
 
-  return data
+  return result.data
 }
 
 function toApiError(error: unknown, response: Response) {
   const body = error as
-    | { error?: { code?: string; message?: string } }
+    | {
+        error?: {
+          code?: string
+          message?: string
+          details?: Record<string, string>
+        }
+      }
     | undefined
 
   return new ApiError(
     body?.error?.message ?? 'Не удалось выполнить запрос',
     response.status,
     body?.error?.code,
+    body?.error?.details,
   )
 }

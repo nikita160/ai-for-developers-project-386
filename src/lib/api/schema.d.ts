@@ -28,7 +28,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Предстоящие брони. */
+        /** @description Предстоящие брони по возрастанию старта. `upcoming=false` возвращает и прошедшие. */
         get: operations["listBookings"];
         put?: never;
         /** @description Создание брони. */
@@ -105,10 +105,8 @@ export interface components {
         Booking: {
             id: string;
             typeId: string;
-            /** Format: date-time */
-            start: string;
-            /** Format: date-time */
-            end: string;
+            start: components["schemas"]["MoscowDateTime"];
+            end: components["schemas"]["MoscowDateTime"];
             name: string;
             email: string;
             /** Format: date-time */
@@ -117,8 +115,7 @@ export interface components {
         /** @description Запрос на создание брони. */
         BookingRequest: {
             typeId: string;
-            /** Format: date-time */
-            start: string;
+            start: components["schemas"]["MoscowDateTime"];
             name: string;
             email: string;
         };
@@ -146,12 +143,12 @@ export interface components {
             /** Format: int32 */
             durationMinutes: number;
         };
+        /** @description Момент времени в Europe/Moscow с фиксированным офсетом. */
+        MoscowDateTime: string;
         /** @description Старт встречи выбранного типа. */
         Slot: {
-            /** Format: date-time */
-            start: string;
-            /** Format: date-time */
-            end: string;
+            start: components["schemas"]["MoscowDateTime"];
+            end: components["schemas"]["MoscowDateTime"];
             available: boolean;
         };
     };
@@ -181,6 +178,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AvailabilityDay"][];
+                };
+            };
+            /** @description The server could not understand the request due to invalid syntax. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -308,6 +314,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Slot"][];
+                };
+            };
+            /** @description The server could not understand the request due to invalid syntax. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };

@@ -1,4 +1,5 @@
-const MOSCOW_OFFSET_MINUTES = 180
+export const MOSCOW_OFFSET_MINUTES = 180
+export const MOSCOW_OFFSET = '+03:00'
 
 const pad = (value: number) => String(value).padStart(2, '0')
 
@@ -11,7 +12,7 @@ export function moscowDateString(date: Date): string {
 /** Instant for a Moscow date at the given number of minutes from midnight. */
 export function moscowDateTime(date: string, minutesFromMidnight: number): Date {
   return new Date(
-    new Date(`${date}T00:00:00+03:00`).getTime() +
+    new Date(`${date}T00:00:00${MOSCOW_OFFSET}`).getTime() +
       minutesFromMidnight * 60_000,
   )
 }
@@ -26,5 +27,5 @@ export function addDays(date: string, amount: number): string {
 /** ISO 8601 instant with the Moscow offset, e.g. 2026-11-18T09:00:00+03:00. */
 export function formatMoscowIso(date: Date): string {
   const shifted = new Date(date.getTime() + MOSCOW_OFFSET_MINUTES * 60_000)
-  return `${shifted.getUTCFullYear()}-${pad(shifted.getUTCMonth() + 1)}-${pad(shifted.getUTCDate())}T${pad(shifted.getUTCHours())}:${pad(shifted.getUTCMinutes())}:${pad(shifted.getUTCSeconds())}+03:00`
+  return `${shifted.getUTCFullYear()}-${pad(shifted.getUTCMonth() + 1)}-${pad(shifted.getUTCDate())}T${pad(shifted.getUTCHours())}:${pad(shifted.getUTCMinutes())}:${pad(shifted.getUTCSeconds())}${MOSCOW_OFFSET}`
 }

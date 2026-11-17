@@ -57,25 +57,15 @@ export type AvailabilityDay = {
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-export function overlaps(
-  aStart: Date,
-  aEnd: Date,
-  bStart: Date,
-  bEnd: Date,
-): boolean {
-  return (
-    aStart.getTime() < bEnd.getTime() && bStart.getTime() < aEnd.getTime()
-  )
+export function overlaps(a: SlotStart, b: SlotStart): boolean {
+  return a.start.getTime() < b.end.getTime() && b.start.getTime() < a.end.getTime()
 }
 
 export function isSlotAvailable(
-  start: Date,
-  end: Date,
+  slot: SlotStart,
   bookings: Booking[],
 ): boolean {
-  return !bookings.some((booking) =>
-    overlaps(start, end, booking.start, booking.end),
-  )
+  return !bookings.some((booking) => overlaps(slot, booking))
 }
 
 export function getSlots(
@@ -86,7 +76,7 @@ export function getSlots(
 ): Slot[] {
   return getSlotStarts(date, type, now).map((slot) => ({
     ...slot,
-    available: isSlotAvailable(slot.start, slot.end, bookings),
+    available: isSlotAvailable(slot, bookings),
   }))
 }
 
@@ -152,7 +142,7 @@ export function createBooking(
     })
   }
 
-  if (!isSlotAvailable(slot.start, slot.end, store.list())) {
+  if (!isSlotAvailable(slot, store.list())) {
     return fail('slot_taken', 'Слот уже занят')
   }
 
@@ -171,13 +161,18 @@ export function createBooking(
   return { ok: true, booking }
 }
 
+export function bookingError(
+  code: BookingErrorCode,
+  message: string,
+  details?: Record<string, string>,
+): BookingError {
+  return details ? { code, message, details } : { code, message }
+}
+
 function fail(
   code: BookingErrorCode,
   message: string,
   details?: Record<string, string>,
 ): CreateBookingResult {
-  return {
-    ok: false,
-    error: details ? { code, message, details } : { code, message },
-  }
+  return { ok: false, error: bookingError(code, message, details) }
 }

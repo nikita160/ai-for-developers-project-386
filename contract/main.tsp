@@ -9,6 +9,10 @@ using OpenAPI;
 @server("http://localhost:3001", "Local development server")
 namespace CalendarApi;
 
+/** Момент времени в Europe/Moscow с фиксированным офсетом. */
+@pattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\+03:00$")
+scalar MoscowDateTime extends string;
+
 /** Состояние сервиса. */
 model HealthStatus {
   status: "ok";
@@ -29,8 +33,8 @@ model AvailabilityDay {
 
 /** Старт встречи выбранного типа. */
 model Slot {
-  start: utcDateTime;
-  end: utcDateTime;
+  start: MoscowDateTime;
+  end: MoscowDateTime;
   available: boolean;
 }
 
@@ -38,8 +42,8 @@ model Slot {
 model Booking {
   id: string;
   typeId: string;
-  start: utcDateTime;
-  end: utcDateTime;
+  start: MoscowDateTime;
+  end: MoscowDateTime;
   name: string;
   email: string;
   createdAt: utcDateTime;
@@ -48,7 +52,7 @@ model Booking {
 /** Запрос на создание брони. */
 model BookingRequest {
   typeId: string;
-  start: utcDateTime;
+  start: MoscowDateTime;
   name: string;
   email: string;
 }
@@ -93,12 +97,15 @@ op listMeetingTypes(): MeetingType[];
 /** Доступность на 14 дней окна записи для выбранного типа. */
 @route("/availability")
 @get
-op getAvailability(@query type: string): AvailabilityDay[];
+op getAvailability(@query type: string): AvailabilityDay[] | BadRequestResponse;
 
 /** Старты выбранного дня для типа встречи. */
 @route("/slots")
 @get
-op listSlots(@query type: string, @query date: plainDate): Slot[];
+op listSlots(
+  @query type: string,
+  @query date: plainDate,
+): Slot[] | BadRequestResponse;
 
 /** Создание брони. */
 @route("/bookings")
@@ -107,7 +114,7 @@ op createBooking(
   @body request: BookingRequest,
 ): CreatedBooking | BadRequestResponse | ConflictResponse;
 
-/** Предстоящие брони. */
+/** Предстоящие брони по возрастанию старта. `upcoming=false` возвращает и прошедшие. */
 @route("/bookings")
 @get
 op listBookings(@query upcoming?: boolean): Booking[];

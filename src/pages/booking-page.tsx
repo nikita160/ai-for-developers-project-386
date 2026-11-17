@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { BookingInfo } from '@/components/booking-info'
 import { MonthCalendar } from '@/components/month-calendar'
@@ -15,7 +15,8 @@ import {
   type MeetingType,
   type Slot,
 } from '@/lib/api'
-import { monthOfDate, type Month } from '@/lib/booking'
+import { monthOfDate, MOSCOW_TIME_ZONE, type Month } from '@/lib/booking'
+import { errorCode, errorField, errorMessage } from '@/lib/errors'
 
 type BookingPageProps = {
   onBack: () => void
@@ -23,10 +24,16 @@ type BookingPageProps = {
 
 type Step = 'select' | 'confirm' | 'done'
 
-const INITIAL_MONTH: Month = (() => {
-  const now = new Date()
-  return { year: now.getUTCFullYear(), month: now.getUTCMonth() }
-})()
+const INITIAL_MONTH: Month = monthOfDate(
+  new Intl.DateTimeFormat('en-CA', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    timeZone: MOSCOW_TIME_ZONE,
+  }).format(new Date()),
+)
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export function BookingPage({ onBack }: BookingPageProps) {
   const [step, setStep] = useState<Step>('select')
@@ -40,9 +47,14 @@ export function BookingPage({ onBack }: BookingPageProps) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<{
+    name?: string
+    email?: string
+  }>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSlotsLoading, setIsSlotsLoading] = useState(false)
   const [refreshToken, setRefreshToken] = useState(0)
+  const hasSetInitialMonth = useRef(false)
 
   const selectedType = types.find((type) => type.id === typeId) ?? null
   const freeCount = date
@@ -62,7 +74,7 @@ export function BookingPage({ onBack }: BookingPageProps) {
       })
       .catch((cause) => {
         if (!controller.signal.aborted) {
-          setError(messageOf(cause))
+          setError(errorMessage(cause))
         }
       })
 
@@ -80,13 +92,14 @@ export function BookingPage({ onBack }: BookingPageProps) {
       .then((days) => {
         setAvailability(days)
 
-        if (days[0]) {
+        if (!hasSetInitialMonth.current && days[0]) {
           setMonth(monthOfDate(days[0].date))
+          hasSetInitialMonth.current = true
         }
       })
       .catch((cause) => {
         if (!controller.signal.aborted) {
-          setError(messageOf(cause))
+          setError(errorMessage(cause))
         }
       })
 
@@ -105,7 +118,7 @@ export function BookingPage({ onBack }: BookingPageProps) {
       .then(setSlots)
       .catch((cause) => {
         if (!controller.signal.aborted) {
-          setError(messageOf(cause))
+          setError(errorMessage(cause))
         }
       })
       .finally(() => {
@@ -144,8 +157,21 @@ export function BookingPage({ onBack }: BookingPageProps) {
       return
     }
 
-    if (!name.trim() || !email.trim()) {
-      setError('Укажите имя и email')
+    const nextFieldErrors: { name?: string; email?: string } = {}
+
+    if (!name.trim()) {
+      nextFieldErrors.name = 'Укажите имя'
+    } else if (name.trim().length > 100) {
+      nextFieldErrors.name = 'Не более 100 символов'
+    }
+
+    if (!EMAIL_PATTERN.test(email.trim())) {
+      nextFieldErrors.email = 'Некорректный email'
+    }
+
+    setFieldErrors(nextFieldErrors)
+
+    if (Object.keys(nextFieldErrors).length > 0) {
       return
     }
 
@@ -166,9 +192,18 @@ export function BookingPage({ onBack }: BookingPageProps) {
         getSlots(typeId, date).then(setSlots).catch(() => {})
       }
     } catch (cause) {
-      setError(messageOf(cause))
+      setError(errorMessage(cause))
 
-      if (codeOf(cause) === 'slot_taken') {
+      const field = errorField(cause)
+
+      if (field === 'name') {
+        setFieldErrors({ name: errorMessage(cause) })
+      } else if (field === 'email') {
+        setFieldErrors({ email: errorMessage(cause) })
+      }
+
+      if (errorCode(cause) === 'slot_taken') {
+        setSlot(null)
         setStep('select')
         setRefreshToken((value) => value + 1)
       }
@@ -186,6 +221,7 @@ export function BookingPage({ onBack }: BookingPageProps) {
     setName('')
     setEmail('')
     setError(null)
+    setFieldErrors({})
     setRefreshToken((value) => value + 1)
   }
 
@@ -310,21 +346,49 @@ export function BookingPage({ onBack }: BookingPageProps) {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-                <Input
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  placeholder="Имя"
-                  autoComplete="name"
-                  className="h-10 bg-card"
-                />
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  placeholder="Email"
-                  autoComplete="email"
-                  className="h-10 bg-card"
-                />
+                <div className="flex flex-col gap-1">
+                  <Input
+                    value={name}
+                    onChange={(event) => {
+                      setName(event.target.value)
+                      setFieldErrors((current) => ({
+                        ...current,
+                        name: undefined,
+                      }))
+                    }}
+                    placeholder="Имя"
+                    autoComplete="name"
+                    aria-invalid={Boolean(fieldErrors.name)}
+                    className="h-10 bg-card"
+                  />
+                  {fieldErrors.name ? (
+                    <p className="text-xs text-destructive">
+                      {fieldErrors.name}
+                    </p>
+                  ) : null}
+                </div>
+                <div className="flex flex-col gap-1">
+                  <Input
+                    type="email"
+                    value={email}
+                    onChange={(event) => {
+                      setEmail(event.target.value)
+                      setFieldErrors((current) => ({
+                        ...current,
+                        email: undefined,
+                      }))
+                    }}
+                    placeholder="Email"
+                    autoComplete="email"
+                    aria-invalid={Boolean(fieldErrors.email)}
+                    className="h-10 bg-card"
+                  />
+                  {fieldErrors.email ? (
+                    <p className="text-xs text-destructive">
+                      {fieldErrors.email}
+                    </p>
+                  ) : null}
+                </div>
                 {error ? (
                   <p className="text-sm text-destructive">{error}</p>
                 ) : null}
@@ -369,15 +433,3 @@ export function BookingPage({ onBack }: BookingPageProps) {
   )
 }
 
-function messageOf(error: unknown): string {
-  return error instanceof Error ? error.message : 'Не удалось выполнить запрос'
-}
-
-function codeOf(error: unknown): string | undefined {
-  if (typeof error === 'object' && error !== null && 'code' in error) {
-    const code = (error as { code?: unknown }).code
-    return typeof code === 'string' ? code : undefined
-  }
-
-  return undefined
-}

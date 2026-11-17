@@ -43,16 +43,26 @@ function storeWith(bookings: Booking[]) {
   return store
 }
 
+function interval(date: string, from: string, to: string) {
+  return { start: at(date, from), end: at(date, to) }
+}
+
 describe('overlaps', () => {
   it('allows back-to-back intervals', () => {
     expect(
-      overlaps(at('2026-11-18', '09:00'), at('2026-11-18', '09:30'), at('2026-11-18', '09:30'), at('2026-11-18', '10:00')),
+      overlaps(
+        interval('2026-11-18', '09:00', '09:30'),
+        interval('2026-11-18', '09:30', '10:00'),
+      ),
     ).toBe(false)
   })
 
   it('detects partial overlap', () => {
     expect(
-      overlaps(at('2026-11-18', '09:00'), at('2026-11-18', '09:30'), at('2026-11-18', '09:15'), at('2026-11-18', '09:45')),
+      overlaps(
+        interval('2026-11-18', '09:00', '09:30'),
+        interval('2026-11-18', '09:15', '09:45'),
+      ),
     ).toBe(true)
   })
 })
@@ -104,8 +114,12 @@ describe('slots', () => {
   it('reports availability through the overlap rule', () => {
     const bookings = [makeBooking('call', '2026-11-18', '09:00', 30)]
 
-    expect(isSlotAvailable(at('2026-11-18', '09:30'), at('2026-11-18', '10:00'), bookings)).toBe(true)
-    expect(isSlotAvailable(at('2026-11-18', '09:00'), at('2026-11-18', '09:30'), bookings)).toBe(false)
+    expect(
+      isSlotAvailable(interval('2026-11-18', '09:30', '10:00'), bookings),
+    ).toBe(true)
+    expect(
+      isSlotAvailable(interval('2026-11-18', '09:00', '09:30'), bookings),
+    ).toBe(false)
   })
 })
 

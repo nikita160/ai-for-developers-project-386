@@ -46,8 +46,11 @@ afterAll(() => {
 })
 
 function validateAgainstContract(component: string, body: unknown) {
-  const schema = spec.components.schemas[component] as object
-  const validate = new Ajv({ strict: false }).compile(schema)
+  const ajv = new Ajv({ strict: false })
+  ajv.addSchema(spec as object, 'openapi')
+  const validate = ajv.compile({
+    $ref: `openapi#/components/schemas/${component}`,
+  })
 
   expect(validate(body), JSON.stringify(validate.errors)).toBe(true)
 }
@@ -138,6 +141,7 @@ describe('availability', () => {
     expect(body).toEqual({
       error: expect.objectContaining({ code: 'validation_error' }),
     })
+    validateAgainstContract('ErrorResponse', body)
   })
 })
 
@@ -166,6 +170,7 @@ describe('slots', () => {
     expect(body).toEqual({
       error: expect.objectContaining({ code: 'date_out_of_window' }),
     })
+    validateAgainstContract('ErrorResponse', body)
   })
 })
 
@@ -186,6 +191,46 @@ describe('bookings', () => {
     expect(upcoming.body[0]).toEqual(
       expect.objectContaining({ id: body.id, typeId: 'call', name: 'Иван' }),
     )
+    upcoming.body.forEach((item: unknown) =>
+      validateAgainstContract('Booking', item),
+    )
+  })
+
+  it('lists upcoming bookings in start order and hides past ones', async () => {
+    store.add({
+      id: 'past',
+      typeId: 'call',
+      start: new Date('2026-11-16T09:00:00+03:00'),
+      end: new Date('2026-11-16T09:30:00+03:00'),
+      name: 'Прошлый',
+      email: 'past@example.com',
+      createdAt: NOW,
+    })
+    store.add({
+      id: 'later',
+      typeId: 'call',
+      start: new Date('2026-11-17T11:00:00+03:00'),
+      end: new Date('2026-11-17T11:30:00+03:00'),
+      name: 'Позже',
+      email: 'later@example.com',
+      createdAt: NOW,
+    })
+    store.add({
+      id: 'in-progress',
+      typeId: 'call',
+      start: new Date('2026-11-17T09:45:00+03:00'),
+      end: new Date('2026-11-17T10:15:00+03:00'),
+      name: 'Идёт',
+      email: 'now@example.com',
+      createdAt: NOW,
+    })
+
+    const { response, body } = await getJson<Array<{ id: string }>>(
+      '/bookings',
+    )
+
+    expect(response.status).toBe(200)
+    expect(body.map((item) => item.id)).toEqual(['in-progress', 'later'])
   })
 
   it('rejects a slot that is already taken', async () => {
@@ -193,9 +238,12 @@ describe('bookings', () => {
     const response = await postBooking(validBooking)
 
     expect(response.status).toBe(409)
-    expect(await response.json()).toEqual({
+    const body = await response.json()
+
+    expect(body).toEqual({
       error: expect.objectContaining({ code: 'slot_taken' }),
     })
+    validateAgainstContract('ErrorResponse', body)
   })
 
   it('rejects invalid contact details', async () => {
@@ -205,9 +253,12 @@ describe('bookings', () => {
     })
 
     expect(response.status).toBe(400)
-    expect(await response.json()).toEqual({
+    const body = await response.json()
+
+    expect(body).toEqual({
       error: expect.objectContaining({ code: 'validation_error' }),
     })
+    validateAgainstContract('ErrorResponse', body)
   })
 
   it('rejects malformed request bodies', async () => {
@@ -218,9 +269,12 @@ describe('bookings', () => {
     })
 
     expect(response.status).toBe(400)
-    expect(await response.json()).toEqual({
+    const body = await response.json()
+
+    expect(body).toEqual({
       error: expect.objectContaining({ code: 'validation_error' }),
     })
+    validateAgainstContract('ErrorResponse', body)
   })
 })
 
