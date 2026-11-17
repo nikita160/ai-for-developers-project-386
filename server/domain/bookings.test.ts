@@ -102,6 +102,20 @@ describe('slots', () => {
     expect(slots[1].available).toBe(true)
   })
 
+  it('blocks a 30-minute call that starts inside a 60-minute consultation', () => {
+    const bookings = [makeBooking('consultation', '2026-11-18', '10:00', 60)]
+    const slots = getSlots('2026-11-18', call, bookings, NOW)
+    const start = at('2026-11-18', '10:30')
+
+    expect(
+      slots.find((slot) => slot.start.getTime() === start.getTime()),
+    ).toEqual({
+      start,
+      end: at('2026-11-18', '11:00'),
+      available: false,
+    })
+  })
+
   it('blocks a consultation that would overlap a call', () => {
     const bookings = [makeBooking('call', '2026-11-18', '09:00', 30)]
     const slots = getSlots('2026-11-18', consultation, bookings, NOW)
@@ -155,6 +169,29 @@ describe('createBooking', () => {
       {
         typeId: 'consultation',
         start: '2026-11-18T09:00:00+03:00',
+        name: 'Иван',
+        email: 'ivan@example.com',
+      },
+      NOW,
+    )
+
+    expect(result).toEqual({
+      ok: false,
+      error: expect.objectContaining({ code: 'slot_taken' }),
+    })
+    expect(store.list()).toHaveLength(1)
+  })
+
+  it('rejects a shorter type that partially overlaps a longer booking', () => {
+    const store = storeWith([
+      makeBooking('consultation', '2026-11-18', '10:00', 60),
+    ])
+
+    const result = createBooking(
+      store,
+      {
+        typeId: 'call',
+        start: '2026-11-18T10:30:00+03:00',
         name: 'Иван',
         email: 'ivan@example.com',
       },

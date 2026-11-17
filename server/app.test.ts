@@ -246,6 +246,39 @@ describe('bookings', () => {
     validateAgainstContract('ErrorResponse', body)
   })
 
+  it('rejects a different type that partially overlaps a longer booking', async () => {
+    const consultation = await postBooking({
+      ...validBooking,
+      typeId: 'consultation',
+      start: '2026-11-18T10:00:00+03:00',
+    })
+
+    expect(consultation.status).toBe(201)
+
+    const response = await postBooking({
+      ...validBooking,
+      typeId: 'call',
+      start: '2026-11-18T10:30:00+03:00',
+    })
+
+    expect(response.status).toBe(409)
+    const body = await response.json()
+
+    expect(body).toEqual({
+      error: expect.objectContaining({ code: 'slot_taken' }),
+    })
+    validateAgainstContract('ErrorResponse', body)
+
+    const { body: slots } = await getJson<
+      Array<{ start: string; available: boolean }>
+    >('/slots?type=call&date=2026-11-18')
+
+    expect(
+      slots.find((slot) => slot.start === '2026-11-18T10:30:00+03:00')
+        ?.available,
+    ).toBe(false)
+  })
+
   it('rejects invalid contact details', async () => {
     const response = await postBooking({
       ...validBooking,
