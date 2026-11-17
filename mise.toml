@@ -9,6 +9,8 @@ pitchfork = "2.34.0"
 [env]
 API_PORT = "3001"
 
+# pitchfork waits forever on ready_port when the port is already listening,
+# so daemons use pitchfork's default 3s readiness delay instead.
 [daemons.api]
 run = "exec npm run dev:api"
 
