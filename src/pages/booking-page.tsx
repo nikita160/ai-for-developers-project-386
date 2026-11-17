@@ -363,10 +363,16 @@ export function BookingPage({ onBack }: BookingPageProps) {
                     placeholder="Имя"
                     autoComplete="name"
                     aria-invalid={Boolean(fieldErrors.name)}
+                    aria-describedby={
+                      fieldErrors.name ? 'booking-name-error' : undefined
+                    }
                     className="h-10 bg-card"
                   />
                   {fieldErrors.name ? (
-                    <p className="text-xs text-destructive">
+                    <p
+                      id="booking-name-error"
+                      className="text-xs text-destructive"
+                    >
                       {fieldErrors.name}
                     </p>
                   ) : null}
@@ -385,10 +391,16 @@ export function BookingPage({ onBack }: BookingPageProps) {
                     placeholder="Email"
                     autoComplete="email"
                     aria-invalid={Boolean(fieldErrors.email)}
+                    aria-describedby={
+                      fieldErrors.email ? 'booking-email-error' : undefined
+                    }
                     className="h-10 bg-card"
                   />
                   {fieldErrors.email ? (
-                    <p className="text-xs text-destructive">
+                    <p
+                      id="booking-email-error"
+                      className="text-xs text-destructive"
+                    >
                       {fieldErrors.email}
                     </p>
                   ) : null}

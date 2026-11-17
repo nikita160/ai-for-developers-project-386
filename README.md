@@ -32,7 +32,7 @@ mise run install    # npm-зависимости
 
 ```bash
 mise run dev      # API на :3001 и фронтенд на :5173 (daemons)
-mise run check    # линтер, проверка типов и тесты
+mise run check    # линтер, проверка типов, тесты и дрейф контракта
 mise run build    # production-сборка
 ```
 
@@ -45,7 +45,8 @@ mise run build    # production-сборка
 Контракт API и клиентский SDK генерируются из TypeSpec:
 
 ```bash
-mise run contract   # contract/openapi.yaml + src/lib/api/schema.d.ts
+mise run contract        # contract/openapi.yaml + src/lib/api/schema.d.ts
+mise run contract:check  # проверить, что генерация не даёт диффа
 ```
 
 ### Структура
@@ -54,6 +55,11 @@ mise run contract   # contract/openapi.yaml + src/lib/api/schema.d.ts
 - `server/` — API на Hono (`app.ts` — маршруты, `index.ts` — запуск)
 - `src/` — React-приложение, клиент API в `src/lib/api`
 - `AGENTS.md` — команды, устройство проекта и правила для агентов
+- `release-please-config.json`, `.release-please-manifest.json` — автоматические релизы по Conventional Commits
+
+### Релизы
+
+Release-please открывает release PR с версией и CHANGELOG, а после merge создаёт тег и GitHub Release. Чтобы release PR запускал CI, добавьте fine-grained PAT с правами Contents и Pull requests в секрет `RELEASE_PLEASE_TOKEN`: PR, созданный `GITHUB_TOKEN`, не запускает workflow.
 
 ---
 

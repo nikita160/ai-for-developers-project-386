@@ -50,8 +50,8 @@ description = "Run oxlint"
 run = "npm run lint"
 
 [tasks.check]
-description = "Run lint, typecheck and tests (used by CI and hk)"
-depends = ["lint", "typecheck", "test"]
+description = "Run lint, typecheck, tests and contract drift (used by CI and hk)"
+run = "npm run check"
 
 [tasks.build]
 description = "Type-check and build for production"

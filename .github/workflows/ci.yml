@@ -27,9 +27,8 @@ jobs:
           echo "::error::$(tail -40 /tmp/npm-ci.log | tr '\n' ' ' | cut -c1-800)"
           exit 1
 
-      - name: Check contract drift
-        run: mise run contract:check
+      - name: Check
+        run: mise run check
 
-      - run: mise run check
-
-      - run: npm run build
+      - name: Build
+        run: mise run build
