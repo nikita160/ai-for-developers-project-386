@@ -1,10 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { formatDateLabel, formatSlot, type Slot } from '@/lib/booking'
+import type { MeetingType, Slot } from '@/lib/api'
+import { formatDateLabel, formatSlotRange } from '@/lib/booking'
 
 type BookingInfoProps = {
-  date: Date | null
+  type: MeetingType | null
+  date: string | null
   slot: Slot | null
-  freeCount: number
+  freeCount: number | null
 }
 
 function InfoRow({ label, value }: { label: string; value: string }) {
@@ -16,7 +18,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   )
 }
 
-export function BookingInfo({ date, slot, freeCount }: BookingInfoProps) {
+export function BookingInfo({ type, date, slot, freeCount }: BookingInfoProps) {
   return (
     <Card className="h-fit [--card-spacing:--spacing(5)]">
       <CardHeader>
@@ -24,18 +26,18 @@ export function BookingInfo({ date, slot, freeCount }: BookingInfoProps) {
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         <InfoRow
+          label="Тип встречи"
+          value={type ? `${type.name} · ${type.durationMinutes} мин` : 'Не выбран'}
+        />
+        <InfoRow
           label="Выбранная дата"
           value={date ? formatDateLabel(date) : 'Дата не выбрана'}
         />
         <InfoRow
           label="Выбранное время"
-          value={slot ? formatSlot(slot) : 'Время не выбрано'}
+          value={slot ? formatSlotRange(slot.start, slot.end) : 'Время не выбрано'}
         />
-        <InfoRow label="Свободно" value={String(freeCount)} />
-        <InfoRow
-          label="Длительности в дне"
-          value={date ? '30 мин' : 'Нет слотов на этот день'}
-        />
+        <InfoRow label="Свободно" value={String(freeCount ?? 0)} />
       </CardContent>
     </Card>
   )

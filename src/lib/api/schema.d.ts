@@ -4,6 +4,41 @@
  */
 
 export interface paths {
+    "/availability": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Доступность на 14 дней окна записи для выбранного типа. */
+        get: operations["getAvailability"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/bookings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Предстоящие брони. */
+        get: operations["listBookings"];
+        put?: never;
+        /** @description Создание брони. */
+        post: operations["createBooking"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -21,14 +56,103 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/meeting-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Список типов встреч. */
+        get: operations["listMeetingTypes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/slots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Старты выбранного дня для типа встречи. */
+        get: operations["listSlots"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @description День окна записи и число свободных стартов. */
+        AvailabilityDay: {
+            /** Format: date */
+            date: string;
+            /** Format: int32 */
+            freeStarts: number;
+        };
+        /** @description Бронь слота гостем. */
+        Booking: {
+            id: string;
+            typeId: string;
+            /** Format: date-time */
+            start: string;
+            /** Format: date-time */
+            end: string;
+            name: string;
+            email: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        /** @description Запрос на создание брони. */
+        BookingRequest: {
+            typeId: string;
+            /** Format: date-time */
+            start: string;
+            name: string;
+            email: string;
+        };
+        /** @description Тело ошибки. */
+        ErrorBody: {
+            code: string;
+            message: string;
+            details?: {
+                [key: string]: string;
+            };
+        };
+        /** @description Ответ с ошибкой. */
+        ErrorResponse: {
+            error: components["schemas"]["ErrorBody"];
+        };
         /** @description Состояние сервиса. */
         HealthStatus: {
             /** @enum {string} */
             status: "ok";
+        };
+        /** @description Тип встречи с фиксированной длительностью. */
+        MeetingType: {
+            id: string;
+            name: string;
+            /** Format: int32 */
+            durationMinutes: number;
+        };
+        /** @description Старт встречи выбранного типа. */
+        Slot: {
+            /** Format: date-time */
+            start: string;
+            /** Format: date-time */
+            end: string;
+            available: boolean;
         };
     };
     responses: never;
@@ -39,6 +163,92 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getAvailability: {
+        parameters: {
+            query: {
+                type: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The request has succeeded. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvailabilityDay"][];
+                };
+            };
+        };
+    };
+    listBookings: {
+        parameters: {
+            query?: {
+                upcoming?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The request has succeeded. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Booking"][];
+                };
+            };
+        };
+    };
+    createBooking: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BookingRequest"];
+            };
+        };
+        responses: {
+            /** @description The request has succeeded and a new resource has been created as a result. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Booking"];
+                };
+            };
+            /** @description The server could not understand the request due to invalid syntax. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The request conflicts with the current state of the server. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     health: {
         parameters: {
             query?: never;
@@ -55,6 +265,49 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthStatus"];
+                };
+            };
+        };
+    };
+    listMeetingTypes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The request has succeeded. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeetingType"][];
+                };
+            };
+        };
+    };
+    listSlots: {
+        parameters: {
+            query: {
+                type: string;
+                date: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The request has succeeded. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Slot"][];
                 };
             };
         };

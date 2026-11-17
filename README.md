@@ -40,6 +40,8 @@ mise run build    # production-сборка
 - API: http://localhost:3001/health
 - Остановить серверы: `mise daemons stop`
 
+Данные хранятся в памяти процесса API: после перезапуска сервера созданные брони пропадают.
+
 Контракт API и клиентский SDK генерируются из TypeSpec:
 
 ```bash

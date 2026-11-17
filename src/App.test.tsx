@@ -7,6 +7,15 @@ import App from './App'
 
 vi.mock('@/lib/api', () => ({
   getHealth: vi.fn().mockResolvedValue({ status: 'ok' }),
+  getMeetingTypes: vi
+    .fn()
+    .mockResolvedValue([
+      { id: 'call', name: 'Звонок', durationMinutes: 30 },
+    ]),
+  getAvailability: vi.fn().mockResolvedValue([]),
+  getSlots: vi.fn().mockResolvedValue([]),
+  createBooking: vi.fn(),
+  getUpcomingBookings: vi.fn().mockResolvedValue([]),
 }))
 
 describe('home page', () => {

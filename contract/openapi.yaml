@@ -5,6 +5,75 @@ info:
   version: 0.0.0
 tags: []
 paths:
+  /availability:
+    get:
+      operationId: getAvailability
+      description: Доступность на 14 дней окна записи для выбранного типа.
+      parameters:
+        - name: type
+          in: query
+          required: true
+          schema:
+            type: string
+          explode: false
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AvailabilityDay'
+  /bookings:
+    post:
+      operationId: createBooking
+      description: Создание брони.
+      parameters: []
+      responses:
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '400':
+          description: The server could not understand the request due to invalid syntax.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: The request conflicts with the current state of the server.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingRequest'
+    get:
+      operationId: listBookings
+      description: Предстоящие брони.
+      parameters:
+        - name: upcoming
+          in: query
+          required: false
+          schema:
+            type: boolean
+          explode: false
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Booking'
   /health:
     get:
       operationId: health
@@ -17,8 +86,132 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthStatus'
+  /meeting-types:
+    get:
+      operationId: listMeetingTypes
+      description: Список типов встреч.
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MeetingType'
+  /slots:
+    get:
+      operationId: listSlots
+      description: Старты выбранного дня для типа встречи.
+      parameters:
+        - name: type
+          in: query
+          required: true
+          schema:
+            type: string
+          explode: false
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          explode: false
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Slot'
 components:
   schemas:
+    AvailabilityDay:
+      type: object
+      required:
+        - date
+        - freeStarts
+      properties:
+        date:
+          type: string
+          format: date
+        freeStarts:
+          type: integer
+          format: int32
+      description: День окна записи и число свободных стартов.
+    Booking:
+      type: object
+      required:
+        - id
+        - typeId
+        - start
+        - end
+        - name
+        - email
+        - createdAt
+      properties:
+        id:
+          type: string
+        typeId:
+          type: string
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+        name:
+          type: string
+        email:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      description: Бронь слота гостем.
+    BookingRequest:
+      type: object
+      required:
+        - typeId
+        - start
+        - name
+        - email
+      properties:
+        typeId:
+          type: string
+        start:
+          type: string
+          format: date-time
+        name:
+          type: string
+        email:
+          type: string
+      description: Запрос на создание брони.
+    ErrorBody:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties:
+            type: string
+      description: Тело ошибки.
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorBody'
+      description: Ответ с ошибкой.
     HealthStatus:
       type: object
       required:
@@ -29,6 +222,37 @@ components:
           enum:
             - ok
       description: Состояние сервиса.
+    MeetingType:
+      type: object
+      required:
+        - id
+        - name
+        - durationMinutes
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        durationMinutes:
+          type: integer
+          format: int32
+      description: Тип встречи с фиксированной длительностью.
+    Slot:
+      type: object
+      required:
+        - start
+        - end
+        - available
+      properties:
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+        available:
+          type: boolean
+      description: Старт встречи выбранного типа.
 servers:
   - url: http://localhost:3001
     description: Local development server

@@ -4,30 +4,28 @@ import { Button } from '@/components/ui/button'
 import {
   addMonths,
   formatMonthLabel,
-  getFreeSlotsCount,
-  getMonthMatrix,
-  isSameDay,
+  getMonthDays,
   WEEKDAY_SHORT,
-  type Booking,
+  type Month,
 } from '@/lib/booking'
 import { cn } from '@/lib/utils'
 
 type MonthCalendarProps = {
-  month: Date
-  selected: Date | null
-  bookings: Booking[]
-  onMonthChange: (month: Date) => void
-  onSelect: (date: Date) => void
+  month: Month
+  selectedDate: string | null
+  availability: Record<string, number>
+  onMonthChange: (month: Month) => void
+  onSelect: (date: string) => void
 }
 
 export function MonthCalendar({
   month,
-  selected,
-  bookings,
+  selectedDate,
+  availability,
   onMonthChange,
   onSelect,
 }: MonthCalendarProps) {
-  const days = getMonthMatrix(month)
+  const days = getMonthDays(month)
 
   return (
     <div>
@@ -67,30 +65,32 @@ export function MonthCalendar({
 
       <div className="mt-1.5 grid grid-cols-7 gap-1.5">
         {days.map((day) => {
-          const isCurrentMonth = day.getMonth() === month.getMonth()
-          const isSelected = selected ? isSameDay(day, selected) : false
-          const freeCount = getFreeSlotsCount(day, bookings)
+          const freeStarts = availability[day.iso]
+          const isInWindow = freeStarts !== undefined
+          const isAvailable = isInWindow && freeStarts > 0
+          const isSelected = selectedDate === day.iso
 
           return (
             <button
-              key={day.toISOString()}
+              key={day.iso}
               type="button"
-              onClick={() => onSelect(day)}
+              disabled={!isAvailable}
+              onClick={() => onSelect(day.iso)}
               className={cn(
-                'flex aspect-square flex-col items-center justify-center rounded-lg border border-transparent bg-secondary text-sm font-medium transition-colors hover:bg-muted',
-                !isCurrentMonth && 'text-muted-foreground/50',
+                'flex aspect-square flex-col items-center justify-center rounded-lg border border-transparent bg-secondary text-sm font-medium transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-secondary',
+                !day.inMonth && 'text-muted-foreground/50',
                 isSelected &&
                   'border-primary bg-card text-primary hover:bg-card',
               )}
             >
-              <span>{day.getDate()}</span>
+              <span>{day.day}</span>
               <span
                 className={cn(
                   'text-[10px] leading-tight font-normal text-muted-foreground',
                   isSelected && 'text-primary/80',
                 )}
               >
-                {freeCount} св.
+                {isInWindow ? `${freeStarts} св.` : ''}
               </span>
             </button>
           )
