@@ -5,8 +5,9 @@
 - `mise install` — поставить версии инструментов из `mise.toml`
 - `mise run install` — установить npm-зависимости
 - `mise run dev` — поднять API (`:3001`) и фронтенд (`:5173`) как daemons; `mise daemons stop` — остановить
-- `mise run check` — линтер + проверка типов + тесты + дрейф контракта; CI запускает её и production-сборку
+- `mise run check` — линтер + проверка типов + API-тесты + браузерный тест + дрейф контракта; CI запускает её и production-сборку
 - `mise run test`, `mise run lint`, `mise run typecheck` — отдельные проверки
+- `mise run test:e2e` — браузерный сценарий Playwright против настоящего API; локально используется установленный Google Chrome, в CI — Playwright Chromium (`npx playwright install chromium`)
 - `mise run contract` — перегенерировать `contract/openapi.yaml` и типизированный SDK
 - `mise run contract:check` — проверить, что сгенерированные файлы совпадают с TypeSpec (падает на диффе)
 
@@ -15,15 +16,17 @@
 - `contract/` — TypeSpec-контракт (`main.tsp`); `openapi.yaml` генерируется
 - `server/` — API на Hono: `app.ts` (маршруты), `index.ts` (запуск)
 - `src/` — React-приложение; клиент API в `src/lib/api` (`schema.d.ts` генерируется)
-- `mise.toml` — версии инструментов, задачи, daemons; `hk.pkl` — git-хуки
+- `e2e/` — браузерные тесты Playwright: основной сценарий бронирования и конфликт слота против настоящего сервера, без подмены ответов API
+- `mise.toml` — версии инструментов, задачи, daemons; `hk.pkl` — git-хуки (pre-commit гоняет `mise run check` вместе с браузерным тестом)
 - `.github/workflows/release-please.yml`, `release-please-config.json`, `.release-please-manifest.json` — автоматические релизы по Conventional Commits
 
 ## Правила
 
 - Сообщения коммитов — Conventional Commits: `feat:`, `fix:`, `chore:`, `docs:`, `test:`, `ci:`, `refactor:`; формат проверяет `commit-msg` хук.
+- Коммит реализации ссылается на тикет, который он закрывает, например `feat: запись на свободный слот (#12)`. GitHub превращает номер в ссылку, и по истории видно, какой коммит какую задачу делал.
 - Изменения API начинаются в `contract/main.tsp`: правка → `mise run contract` → обновление `server/`.
-- Сгенерированные файлы `contract/openapi.yaml` и `src/lib/api/schema.d.ts` руками не редактируются.
-- Перед push запускайте `mise run check` и `mise run contract:check`; CI дополнительно собирает production-сборку.
+- Генерируемые пути — `contract/openapi.yaml` и `src/lib/api/schema.d.ts`; руками они не редактируются. Для Hono подходящего серверного генератора нет, поэтому сервер реализован по контракту вручную.
+- Перед push запускайте `mise run check`: она перегенерирует контракт и падает, если `contract/openapi.yaml` или `src/lib/api/schema.d.ts` отличаются от TypeSpec (в том числе когда файл появился или исчез). CI запускает ту же команду и дополнительно собирает production-сборку.
 
 ## Agent skills
 

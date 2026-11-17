@@ -32,8 +32,12 @@ mise run install    # npm-зависимости
 
 ```bash
 mise run dev      # API на :3001 и фронтенд на :5173 (daemons)
-mise run check    # линтер, проверка типов, тесты и дрейф контракта
+mise run check    # линтер, проверка типов, API-тесты, браузерный тест и дрейф контракта
 mise run build    # production-сборка
+
+mise run test:e2e                # браузерный сценарий против настоящего API
+# локально нужен Google Chrome; в CI ставится Playwright Chromium:
+# npx playwright install chromium
 ```
 
 - Фронтенд: http://localhost:5173
