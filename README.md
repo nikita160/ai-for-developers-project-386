@@ -59,7 +59,7 @@ mise run contract:check  # проверить, что генерация не д
 
 ### Релизы
 
-Release-please открывает release PR с версией и CHANGELOG, а после merge создаёт тег и GitHub Release. Чтобы release PR запускал CI, добавьте fine-grained PAT с правами Contents и Pull requests в секрет `RELEASE_PLEASE_TOKEN`: PR, созданный `GITHUB_TOKEN`, не запускает workflow.
+Release-please открывает release PR с версией и CHANGELOG, а после merge создаёт тег и GitHub Release. Чтобы release PR запускал CI, добавьте fine-grained PAT с правами Contents и Pull requests в секрет `RELEASE_PLEASE_TOKEN`: PR, созданный `GITHUB_TOKEN`, не запускает workflow. Запасной вариант — запустить CI вручную (`workflow_dispatch`) на ветке release PR.
 
 ---
 
