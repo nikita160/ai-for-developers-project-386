@@ -345,7 +345,11 @@ export function BookingPage({ onBack }: BookingPageProps) {
               </Button>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+              <form
+                onSubmit={handleSubmit}
+                noValidate
+                className="flex flex-col gap-3"
+              >
                 <div className="flex flex-col gap-1">
                   <Input
                     value={name}
