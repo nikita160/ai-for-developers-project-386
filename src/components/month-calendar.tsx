@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   addMonths,
+  formatDateLabel,
   formatMonthLabel,
   getMonthDays,
   WEEKDAY_SHORT,
@@ -74,6 +75,12 @@ export function MonthCalendar({
             <button
               key={day.iso}
               type="button"
+              data-date={day.iso}
+              aria-label={
+                hasAvailability
+                  ? `${formatDateLabel(day.iso)}, свободно: ${freeStarts}`
+                  : formatDateLabel(day.iso)
+              }
               disabled={!isAvailable}
               onClick={() => onSelect(day.iso)}
               className={cn(

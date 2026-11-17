@@ -10,13 +10,14 @@
     "build": "tsc -b && vite build",
     "start": "tsx server/index.ts",
     "contract": "tsp compile contract && openapi-typescript contract/openapi.yaml -o src/lib/api/schema.d.ts",
-    "contract:check": "npm run contract && test -z \"$(git status --porcelain -- contract/openapi.yaml src/lib/api/schema.d.ts)\"",
+    "contract:check": "npm run contract && test -z \"$(git status --porcelain -- contract/openapi.yaml src/lib/api/schema.d.ts)\" && test -z \"$(git ls-files --others --exclude-standard -- contract src/lib/api)\"",
     "typecheck": "tsc -b",
     "lint": "oxlint",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "playwright test",
     "preview": "vite preview",
-    "check": "npm run lint && npm run typecheck && npm run test && npm run contract:check"
+    "check": "npm run lint && npm run typecheck && npm run test && npm run contract:check && npm run test:e2e"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.3.0",
@@ -37,6 +38,7 @@
     "tw-animate-css": "^1.4.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.1",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.8",

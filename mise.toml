@@ -50,8 +50,12 @@ description = "Run oxlint"
 run = "npm run lint"
 
 [tasks.check]
-description = "Run lint, typecheck, tests and contract drift (used by CI and hk)"
+description = "Run lint, typecheck, API tests, browser test and contract drift (used by CI and hk)"
 run = "npm run check"
+
+[tasks."test:e2e"]
+description = "Run the Playwright booking scenario against the real API"
+run = "npm run test:e2e"
 
 [tasks.build]
 description = "Type-check and build for production"

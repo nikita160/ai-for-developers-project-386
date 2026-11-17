@@ -28,6 +28,9 @@ jobs:
           echo "::error::$(tail -40 /tmp/npm-ci.log | tr '\n' ' ' | cut -c1-800)"
           exit 1
 
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
       - name: Check
         run: mise run check
 

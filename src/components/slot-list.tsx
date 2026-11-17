@@ -18,6 +18,7 @@ export function SlotList({ slots, selectedStart, onSelect }: SlotListProps) {
           <button
             key={slot.start}
             type="button"
+            data-start={slot.start}
             disabled={!slot.available}
             onClick={() => onSelect(slot)}
             className={cn(
