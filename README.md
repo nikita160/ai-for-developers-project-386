@@ -1,29 +1,57 @@
 # Календарь звонков
 
-
 [![hexlet-check](https://github.com/nikita160/ai-for-developers-project-386/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/nikita160/ai-for-developers-project-386/actions)
+[![CI](https://github.com/nikita160/ai-for-developers-project-386/actions/workflows/ci.yml/badge.svg)](https://github.com/nikita160/ai-for-developers-project-386/actions/workflows/ci.yml)
 
-Разработайте совместно с ИИ сервис для бронирования календаря
+Сервис для бронирования календаря: выбор даты и времени звонка, подтверждение записи и список предстоящих событий.
 
 Учебный проект Хекслета: https://ru.hexlet.io/programs/ai-for-developers
 Как это должно работать: https://files.hexlet.app/a/2ipc5m
 
 ## Стек
 
-- Разное
+- TypeScript, React 19, Vite 8
+- shadcn/ui, Tailwind CSS 4
+- Hono + `@hono/node-server` (API)
+- TypeSpec → OpenAPI → типизированный клиент (`openapi-fetch`)
+- Vitest, oxlint
+- mise (версии, задачи, daemons), hk (git-хуки), GitHub Actions
 
 ## Установка
 
-<!-- Опишите установку: клонирование, зависимости, переменные окружения -->
+Нужен [mise](https://mise.jdx.dev) — он ставит Node и остальные инструменты из `mise.toml`.
 
 ```bash
 git clone https://github.com/nikita160/ai-for-developers-project-386.git
 cd ai-for-developers-project-386
+mise install        # Node 22.23.5, hk, pitchfork
+mise run install    # npm-зависимости
 ```
 
 ## Использование
 
-<!-- Добавьте примеры запуска и запись asciinema — именно это смотрит работодатель -->
+```bash
+mise run dev      # API на :3001 и фронтенд на :5173 (daemons)
+mise run check    # линтер, проверка типов и тесты
+mise run build    # production-сборка
+```
+
+- Фронтенд: http://localhost:5173
+- API: http://localhost:3001/health
+- Остановить серверы: `mise daemons stop`
+
+Контракт API и клиентский SDK генерируются из TypeSpec:
+
+```bash
+mise run contract   # contract/openapi.yaml + src/lib/api/schema.d.ts
+```
+
+### Структура
+
+- `contract/` — TypeSpec-контракт (`main.tsp`) и сгенерированный `openapi.yaml`
+- `server/` — API на Hono (`app.ts` — маршруты, `index.ts` — запуск)
+- `src/` — React-приложение, клиент API в `src/lib/api`
+- `AGENTS.md` — команды, устройство проекта и правила для агентов
 
 ---
 
