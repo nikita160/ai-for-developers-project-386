@@ -1,0 +1,13 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "servers": {
+      // Railway hosts the deployed Docker image. Sign-in is OAuth, so no
+      // token belongs in this file: run /mcps and connect the server.
+      "railway": {
+        "type": "remote",
+        "url": "https://mcp.railway.com"
+      }
+    }
+  }
+}

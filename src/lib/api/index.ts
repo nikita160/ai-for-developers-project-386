@@ -8,7 +8,11 @@ export type Slot = components['schemas']['Slot']
 export type Booking = components['schemas']['Booking']
 export type BookingRequest = components['schemas']['BookingRequest']
 
-export const api = createApiClient(import.meta.env.VITE_API_BASE_URL ?? '/api')
+// Development: Vite proxies `/api`. Production: the API and the SPA share an
+// origin, so relative paths reach the same server.
+export const api = createApiClient(
+  import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.DEV ? '/api' : ''),
+)
 
 export async function getHealth(signal?: AbortSignal) {
   return unwrap(await api.GET('/health', { signal }))
