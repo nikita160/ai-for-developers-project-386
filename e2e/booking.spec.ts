@@ -167,7 +167,13 @@ test('гость меняет тип, бронирует свободный сл
   await expect(page.getByText('Укажите имя')).toBeVisible()
   await expect(page.getByText('Некорректный email')).toBeVisible()
 
-  await fillContacts(page, 'Тест Гость', 'guest@example.com')
+  // The public instance keeps bookings between runs, so identify this guest
+  // by values unique to this test run.
+  const runId = Date.now()
+  const guestName = `Тест Гость ${runId}`
+  const guestEmail = `guest-${runId}@example.com`
+
+  await fillContacts(page, guestName, guestEmail)
   await page.getByRole('button', { name: 'Подтвердить запись' }).click()
 
   await expect(
@@ -180,8 +186,13 @@ test('гость меняет тип, бронирует свободный сл
   await expect(
     page.getByRole('heading', { name: 'Предстоящие события' }),
   ).toBeVisible()
-  await expect(page.getByText('Тест Гость')).toBeVisible()
-  await expect(page.getByText('Тип: Консультация')).toBeVisible()
+
+  const bookingCard = page
+    .locator('[data-slot="card"]')
+    .filter({ hasText: guestEmail })
+
+  await expect(bookingCard).toContainText(guestName)
+  await expect(bookingCard).toContainText('Тип: Консультация')
 })
 
 test('занятый слот помечается, повторная запись даёт понятную ошибку', async ({
