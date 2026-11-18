@@ -257,6 +257,12 @@ test('день без свободных стартов недоступен в 
   page,
   request,
 }) => {
+  // Filling every start on a day would empty part of the published demo.
+  test.skip(
+    process.env.PLAYWRIGHT_REMOTE === '1',
+    'не опустошает опубликованный инстанс',
+  )
+
   const days = await getAvailability(request, 'call')
   const firstDay = days[0]
 

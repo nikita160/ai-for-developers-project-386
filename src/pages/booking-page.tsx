@@ -15,7 +15,7 @@ import {
   type MeetingType,
   type Slot,
 } from '@/lib/api'
-import { monthOfDate, MOSCOW_TIME_ZONE, type Month } from '@/lib/booking'
+import { monthOfDate, moscowDateOf, type Month } from '@/lib/booking'
 import { errorCode, errorField, errorMessage } from '@/lib/errors'
 
 type BookingPageProps = {
@@ -24,14 +24,7 @@ type BookingPageProps = {
 
 type Step = 'select' | 'confirm' | 'done'
 
-const INITIAL_MONTH: Month = monthOfDate(
-  new Intl.DateTimeFormat('en-CA', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    timeZone: MOSCOW_TIME_ZONE,
-  }).format(new Date()),
-)
+const INITIAL_MONTH: Month = monthOfDate(moscowDateOf(new Date().toISOString()))
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 

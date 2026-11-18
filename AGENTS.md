@@ -17,7 +17,7 @@
 - `contract/` — TypeSpec-контракт (`main.tsp`); `openapi.yaml` генерируется
 - `server/` — API на Hono: `app.ts` (маршруты), `index.ts` (запуск)
 - `src/` — React-приложение; клиент API в `src/lib/api` (`schema.d.ts` генерируется)
-- `e2e/` — браузерные тесты Playwright: основной сценарий бронирования и конфликт слота против настоящего сервера, без подмены ответов API
+- `e2e/` — браузерные тесты Playwright: основной сценарий бронирования и конфликт слота против настоящего сервера, без подмены ответов API; `verify-deployment.mjs` проверяет опубликованный адрес
 - `mise.toml` — версии инструментов, задачи, daemons; `hk.pkl` — git-хуки (pre-commit гоняет `mise run check` вместе с браузерным тестом)
 - `Dockerfile`, `render.yaml`, `railway.json` — production-образ и настройки хостингов; приложение слушает `PORT` и раздаёт `dist`
 - `opencode.jsonc` — MCP-серверы хостинга: Render по ключу из `RENDER_API_KEY`, Railway по OAuth
