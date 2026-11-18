@@ -11,7 +11,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Доступность на 14 дней окна записи для выбранного типа. */
+        /**
+         * @description Доступность на 14 календарных дней окна записи, начиная с завтрашнего дня
+         *     по Europe/Moscow (UTC+3); окно сдвигается ежедневно. `freeStarts` — число
+         *     стартов дня, свободных для выбранного типа встречи.
+         */
         get: operations["getAvailability"];
         put?: never;
         post?: never;
@@ -31,7 +35,11 @@ export interface paths {
         /** @description Предстоящие брони по возрастанию старта. `upcoming=false` возвращает и прошедшие. */
         get: operations["listBookings"];
         put?: never;
-        /** @description Создание брони. */
+        /**
+         * @description Создание брони. Бронь занимает полуинтервал [start, end); наложение
+         *     положительной длины с любой другой бронью, включая другой тип встречи,
+         *     отклоняется с 409 `slot_taken`.
+         */
         post: operations["createBooking"];
         delete?: never;
         options?: never;
@@ -80,7 +88,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Старты выбранного дня для типа встречи. */
+        /**
+         * @description Старты выбранного дня для типа встречи: сетка 30 минут в рабочих часах
+         *     09:00–18:00 Europe/Moscow (UTC+3). Последний старт — 18:00 минус длительность
+         *     типа; слот целиком помещается в рабочие часы и длится столько, сколько тип.
+         */
         get: operations["listSlots"];
         put?: never;
         post?: never;
@@ -101,7 +113,7 @@ export interface components {
             /** Format: int32 */
             freeStarts: number;
         };
-        /** @description Бронь слота гостем. */
+        /** @description Бронь слота гостем: имя, email и интервал в Europe/Moscow. */
         Booking: {
             id: string;
             typeId: string;
@@ -140,12 +152,15 @@ export interface components {
         MeetingType: {
             id: string;
             name: string;
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Длительность встречи в минутах; задаёт длину слота и шаг доступных стартов.
+             */
             durationMinutes: number;
         };
         /** @description Момент времени в Europe/Moscow с фиксированным офсетом. */
         MoscowDateTime: string;
-        /** @description Старт встречи выбранного типа. */
+        /** @description Старт встречи выбранного типа; длительность равна длительности типа. */
         Slot: {
             start: components["schemas"]["MoscowDateTime"];
             end: components["schemas"]["MoscowDateTime"];

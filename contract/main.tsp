@@ -22,6 +22,7 @@ model HealthStatus {
 model MeetingType {
   id: string;
   name: string;
+  /** Длительность встречи в минутах; задаёт длину слота и шаг доступных стартов. */
   durationMinutes: int32;
 }
 
@@ -31,14 +32,14 @@ model AvailabilityDay {
   freeStarts: int32;
 }
 
-/** Старт встречи выбранного типа. */
+/** Старт встречи выбранного типа; длительность равна длительности типа. */
 model Slot {
   start: MoscowDateTime;
   end: MoscowDateTime;
   available: boolean;
 }
 
-/** Бронь слота гостем. */
+/** Бронь слота гостем: имя, email и интервал в Europe/Moscow. */
 model Booking {
   id: string;
   typeId: string;
@@ -94,12 +95,20 @@ op health(): HealthStatus;
 @get
 op listMeetingTypes(): MeetingType[];
 
-/** Доступность на 14 дней окна записи для выбранного типа. */
+/**
+ * Доступность на 14 календарных дней окна записи, начиная с завтрашнего дня
+ * по Europe/Moscow (UTC+3); окно сдвигается ежедневно. `freeStarts` — число
+ * стартов дня, свободных для выбранного типа встречи.
+ */
 @route("/availability")
 @get
 op getAvailability(@query type: string): AvailabilityDay[] | BadRequestResponse;
 
-/** Старты выбранного дня для типа встречи. */
+/**
+ * Старты выбранного дня для типа встречи: сетка 30 минут в рабочих часах
+ * 09:00–18:00 Europe/Moscow (UTC+3). Последний старт — 18:00 минус длительность
+ * типа; слот целиком помещается в рабочие часы и длится столько, сколько тип.
+ */
 @route("/slots")
 @get
 op listSlots(
@@ -107,7 +116,11 @@ op listSlots(
   @query date: plainDate,
 ): Slot[] | BadRequestResponse;
 
-/** Создание брони. */
+/**
+ * Создание брони. Бронь занимает полуинтервал [start, end); наложение
+ * положительной длины с любой другой бронью, включая другой тип встречи,
+ * отклоняется с 409 `slot_taken`.
+ */
 @route("/bookings")
 @post
 op createBooking(

@@ -8,7 +8,10 @@ paths:
   /availability:
     get:
       operationId: getAvailability
-      description: Доступность на 14 дней окна записи для выбранного типа.
+      description: |-
+        Доступность на 14 календарных дней окна записи, начиная с завтрашнего дня
+        по Europe/Moscow (UTC+3); окно сдвигается ежедневно. `freeStarts` — число
+        стартов дня, свободных для выбранного типа встречи.
       parameters:
         - name: type
           in: query
@@ -34,7 +37,10 @@ paths:
   /bookings:
     post:
       operationId: createBooking
-      description: Создание брони.
+      description: |-
+        Создание брони. Бронь занимает полуинтервал [start, end); наложение
+        положительной длины с любой другой бронью, включая другой тип встречи,
+        отклоняется с 409 `slot_taken`.
       parameters: []
       responses:
         '201':
@@ -109,7 +115,10 @@ paths:
   /slots:
     get:
       operationId: listSlots
-      description: Старты выбранного дня для типа встречи.
+      description: |-
+        Старты выбранного дня для типа встречи: сетка 30 минут в рабочих часах
+        09:00–18:00 Europe/Moscow (UTC+3). Последний старт — 18:00 минус длительность
+        типа; слот целиком помещается в рабочие часы и длится столько, сколько тип.
       parameters:
         - name: type
           in: query
@@ -180,7 +189,7 @@ components:
         createdAt:
           type: string
           format: date-time
-      description: Бронь слота гостем.
+      description: 'Бронь слота гостем: имя, email и интервал в Europe/Moscow.'
     BookingRequest:
       type: object
       required:
@@ -245,6 +254,7 @@ components:
         durationMinutes:
           type: integer
           format: int32
+          description: Длительность встречи в минутах; задаёт длину слота и шаг доступных стартов.
       description: Тип встречи с фиксированной длительностью.
     MoscowDateTime:
       type: string
@@ -263,7 +273,7 @@ components:
           $ref: '#/components/schemas/MoscowDateTime'
         available:
           type: boolean
-      description: Старт встречи выбранного типа.
+      description: Старт встречи выбранного типа; длительность равна длительности типа.
 servers:
   - url: http://localhost:3001
     description: Local development server
