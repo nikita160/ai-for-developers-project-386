@@ -10,7 +10,7 @@
     "build": "tsc -b && vite build",
     "start": "tsx server/index.ts",
     "contract": "tsp compile contract && openapi-typescript contract/openapi.yaml -o src/lib/api/schema.d.ts",
-    "contract:check": "npm run contract && test -z \"$(git status --porcelain -- contract/openapi.yaml src/lib/api/schema.d.ts)\" && test -z \"$(git ls-files --others --exclude-standard -- contract src/lib/api)\"",
+    "contract:check": "npm run contract && git diff --exit-code -- contract/openapi.yaml src/lib/api/schema.d.ts && test -z \"$(git ls-files --others --exclude-standard -- contract src/lib/api)\"",
     "typecheck": "tsc -b",
     "lint": "oxlint",
     "test": "vitest run",
