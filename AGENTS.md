@@ -10,6 +10,7 @@
 - `mise run test:e2e` — браузерный сценарий Playwright против настоящего API; локально используется установленный Google Chrome, в CI — Playwright Chromium (`npx playwright install chromium`)
 - `mise run contract` — перегенерировать `contract/openapi.yaml` и типизированный SDK
 - `mise run contract:check` — проверить, что сгенерированные файлы совпадают с TypeSpec (падает на диффе)
+- `gh workflow run verify-deploy.yml -f base_url=<url>` — проверить опубликованное приложение по публичной ссылке
 
 ## Устройство
 
@@ -18,6 +19,8 @@
 - `src/` — React-приложение; клиент API в `src/lib/api` (`schema.d.ts` генерируется)
 - `e2e/` — браузерные тесты Playwright: основной сценарий бронирования и конфликт слота против настоящего сервера, без подмены ответов API
 - `mise.toml` — версии инструментов, задачи, daemons; `hk.pkl` — git-хуки (pre-commit гоняет `mise run check` вместе с браузерным тестом)
+- `Dockerfile`, `render.yaml`, `railway.json` — production-образ и настройки хостингов; приложение слушает `PORT` и раздаёт `dist`
+- `opencode.jsonc` — MCP-серверы хостинга: Render по ключу из `RENDER_API_KEY`, Railway по OAuth
 - `.github/workflows/release-please.yml`, `release-please-config.json`, `.release-please-manifest.json` — автоматические релизы по Conventional Commits
 
 ## Правила

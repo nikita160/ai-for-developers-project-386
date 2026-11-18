@@ -5,6 +5,8 @@
 
 Сервис для бронирования календаря: выбор даты и времени звонка, подтверждение записи и список предстоящих событий.
 
+**Демо:** https://calendar-booking-9ie4.onrender.com
+
 Учебный проект Хекслета: https://ru.hexlet.io/programs/ai-for-developers
 Как это должно работать: https://files.hexlet.app/a/2ipc5m
 
@@ -44,7 +46,7 @@ mise run test:e2e                # браузерный сценарий про�
 - API: http://localhost:3001/health
 - Остановить серверы: `mise daemons stop`
 
-Данные хранятся в памяти процесса API: после перезапуска сервера созданные брони пропадают.
+Данные хранятся в памяти процесса API — см. раздел [«Хранение данных»](#хранение-данных).
 
 Контракт API и клиентский SDK генерируются из TypeSpec:
 
@@ -64,6 +66,49 @@ mise run contract:check  # проверить, что генерация не д
 ### Релизы
 
 Release-please открывает release PR с версией и CHANGELOG, а после merge создаёт тег и GitHub Release. Чтобы release PR запускал CI, добавьте fine-grained PAT с правами Contents и Pull requests в секрет `RELEASE_PLEASE_TOKEN`: PR, созданный `GITHUB_TOKEN`, не запускает workflow. Запасной вариант — запустить CI вручную (`workflow_dispatch`) на ветке release PR.
+
+## Деплой
+
+Приложение опубликовано: **https://calendar-booking-9ie4.onrender.com**
+
+В production один процесс Hono (`npm start`) отдаёт собранный SPA из `dist` и API на том же origin. Порт берётся из `PORT` (локально — `API_PORT`, затем `3001`), сервер слушает `0.0.0.0`.
+
+```bash
+docker build -t calendar-booking .
+docker run --rm -p 8080:8080 -e PORT=8080 calendar-booking
+# http://localhost:8080
+```
+
+`Dockerfile` собирает SPA в отдельной стадии и ставит в runtime только production-зависимости. `tsx` лежит в `dependencies`, потому что `npm start` запускает TypeScript-сервер.
+
+Хостинг — Render: `render.yaml` описывает web-сервис из `Dockerfile` с healthcheck `/health`, а Render сам передаёт `PORT` в контейнер. `railway.json` содержит те же настройки для Railway на случай, если Render недоступен.
+
+Публичную ссылку проверяет workflow `Verify deployment` (`.github/workflows/verify-deploy.yml`, ручной запуск с параметром `base_url`): он создаёт бронь через публичный адрес, находит её в списке предстоящих и убеждается, что пересекающаяся запись отклоняется с `409 slot_taken`.
+
+### MCP хостинга
+
+MCP-серверы описаны в `opencode.jsonc`; секретов в файле нет:
+
+- `railway` (`https://mcp.railway.com`) — активный, вход по OAuth;
+- `render` (`https://mcp.render.com/mcp`) — добавлен, но `disabled: true`: `mcp.render.com` не открывается из сети, где шёл деплой.
+
+Порядок подключения:
+
+1. Установите OpenCode и откройте корень проекта — `opencode.jsonc` подхватится автоматически.
+2. Выполните `/mcps`, выберите `railway` и войдите через браузер. OAuth-токен OpenCode хранит вне проекта.
+3. Дождитесь статуса `connected`: агенту станут доступны инструменты проектов, сервисов, деплоя и доменов Railway.
+4. Для Render MCP получите API key в Render (Account Settings → API Keys), задайте `RENDER_API_KEY` в окружении и уберите `"disabled": true` у `render`. Ключ подставляется через `{env:RENDER_API_KEY}` и в репозиторий не попадает.
+5. Токены и `.env` держите вне git: `.gitignore` и `.dockerignore` их исключают.
+
+### Хранение данных
+
+Брони живут в памяти процесса API (`server/store.ts`): базы, файла или внешнего хранилища нет. Поэтому:
+
+- рестарт, redeploy и засыпание бесплатного инстанса Render стирают все брони;
+- несколько реплик получат каждая свой список, и проверка пересечений перестанет быть надёжной — инстанс должен быть один;
+- файловая система контейнера эфемерна, писать данные в неё бессмысленно.
+
+Ограничение зафиксировано в ADR [`docs/adr/0001-in-memory-storage.md`](docs/adr/0001-in-memory-storage.md). Для продакшена нужна БД с транзакционной проверкой пересечений.
 
 ---
 

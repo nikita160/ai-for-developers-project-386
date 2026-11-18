@@ -2,8 +2,19 @@
   "$schema": "https://opencode.ai/config.json",
   "mcp": {
     "servers": {
-      // Railway hosts the deployed Docker image. Sign-in is OAuth, so no
-      // token belongs in this file: run /mcps and connect the server.
+      // Render hosts the published service. The endpoint is blocked from the
+      // network used for deploys, so it stays off until RENDER_API_KEY is set
+      // and `disabled` is removed.
+      "render": {
+        "type": "remote",
+        "url": "https://mcp.render.com/mcp",
+        "oauth": false,
+        "headers": {
+          "Authorization": "Bearer {env:RENDER_API_KEY}"
+        },
+        "disabled": true
+      },
+      // Railway deploys the same Docker image; OAuth keeps secrets out of git.
       "railway": {
         "type": "remote",
         "url": "https://mcp.railway.com"

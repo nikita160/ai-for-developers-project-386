@@ -24,3 +24,8 @@ playwright-report
 *.njsproj
 *.sln
 *.sw?
+
+# Local secrets
+.env
+.env.*
+!.env.example
