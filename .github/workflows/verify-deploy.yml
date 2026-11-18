@@ -1,0 +1,18 @@
+name: Verify deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: Public base URL
+        required: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Book through the public URL
+        env:
+          BASE_URL: ${{ inputs.base_url }}
+        run: node e2e/verify-deployment.mjs
