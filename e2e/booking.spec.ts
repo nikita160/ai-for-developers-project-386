@@ -5,12 +5,9 @@ import {
   type Page,
 } from '@playwright/test'
 
-import type { components } from '../src/lib/api/schema'
+import type { AvailabilityDay, Slot } from '../src/lib/api/generated/types.gen'
 
 const API_URL = process.env.API_URL ?? 'http://127.0.0.1:3001'
-
-type AvailabilityDay = components['schemas']['AvailabilityDay']
-type Slot = components['schemas']['Slot']
 
 async function getAvailability(
   request: APIRequestContext,
