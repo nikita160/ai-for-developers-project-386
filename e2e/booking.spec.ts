@@ -312,3 +312,59 @@ test('день без свободных стартов недоступен в 
   await expect(button).toHaveAttribute('aria-label', /, свободно: 0$/)
   await expect(button).toBeDisabled()
 })
+
+test('владелец создаёт тип встречи, и гость записывается на его слот', async ({
+  page,
+  request,
+}) => {
+  // Созданный тип нельзя удалить, поэтому не создаём его в опубликованном инстансе.
+  test.skip(
+    process.env.PLAYWRIGHT_REMOTE === '1',
+    'не создаёт типы встреч в опубликованном инстансе',
+  )
+
+  const runId = Date.now()
+  const typeName = `Ревью ${runId}`
+  const durationMinutes = 30
+
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Предстоящие события' }).click()
+  await expect(
+    page.getByRole('heading', { name: 'Предстоящие события' }),
+  ).toBeVisible()
+
+  await page.getByLabel('Название').fill(typeName)
+  await page.getByLabel('Описание').fill('Разбор кода и рекомендации.')
+  await page.getByLabel('Длительность, минут').fill(String(durationMinutes))
+  await page.getByRole('button', { name: 'Создать тип' }).click()
+
+  // Тип появляется в списке владельца.
+  await expect(page.getByText(typeName).first()).toBeVisible()
+
+  const typesResponse = await request.get(`${API_URL}/meeting-types`)
+  expect(typesResponse.ok()).toBeTruthy()
+  const types = (await typesResponse.json()) as Array<{ id: string; name: string }>
+  const created = types.find((type) => type.name === typeName)
+  expect(created).toBeDefined()
+
+  const days = await getAvailability(request, created!.id)
+  const day = findDay(
+    days,
+    (candidate) => candidate.freeStarts > 0,
+    'свободный день для нового типа',
+  )
+  const slot = await firstFreeSlot(request, created!.id, day.date)
+
+  await openBookingPage(page)
+  await page
+    .getByRole('button', { name: `${typeName} · ${durationMinutes} мин` })
+    .click()
+
+  await pickSlot(page, day.date, slot.start)
+  await fillContacts(page, `Гость ${typeName}`, `guest-${runId}@example.com`)
+  await page.getByRole('button', { name: 'Подтвердить запись' }).click()
+
+  await expect(
+    page.getByRole('heading', { name: 'Бронь подтверждена. До встречи!' }),
+  ).toBeVisible()
+})

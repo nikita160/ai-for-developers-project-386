@@ -1,6 +1,11 @@
 import { randomUUID } from 'node:crypto'
 
-import { findMeetingType, type MeetingType, type MeetingTypeId } from './meeting-types'
+import { apiError, type ApiError, type ApiErrorCode } from './errors'
+import {
+  findMeetingType,
+  SEED_MEETING_TYPES,
+  type MeetingType,
+} from './meeting-types'
 import {
   getSlotStarts,
   getWindowDates,
@@ -11,7 +16,7 @@ import { moscowDateString } from './time'
 
 export type Booking = {
   id: string
-  typeId: MeetingTypeId
+  typeId: string
   start: Date
   end: Date
   name: string
@@ -24,16 +29,9 @@ export type BookingStore = {
   add(booking: Booking): void
 }
 
-export type BookingErrorCode =
-  | 'validation_error'
-  | 'slot_taken'
-  | 'date_out_of_window'
-
-export type BookingError = {
-  code: BookingErrorCode
-  message: string
-  details?: Record<string, string>
-}
+export type BookingError = ApiError
+export type BookingErrorCode = ApiErrorCode
+export const bookingError = apiError
 
 export type CreateBookingInput = {
   typeId: string
@@ -97,8 +95,9 @@ export function createBooking(
   store: BookingStore,
   input: CreateBookingInput,
   now: Date,
+  types: MeetingType[] = SEED_MEETING_TYPES,
 ): CreateBookingResult {
-  const type = findMeetingType(input.typeId)
+  const type = findMeetingType(types, input.typeId)
 
   if (!type) {
     return fail('validation_error', 'Неизвестный тип встречи', {
@@ -159,14 +158,6 @@ export function createBooking(
   store.add(booking)
 
   return { ok: true, booking }
-}
-
-export function bookingError(
-  code: BookingErrorCode,
-  message: string,
-  details?: Record<string, string>,
-): BookingError {
-  return details ? { code, message, details } : { code, message }
 }
 
 function fail(

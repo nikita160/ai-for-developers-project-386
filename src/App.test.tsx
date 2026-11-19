@@ -6,16 +6,23 @@ import { describe, expect, it, vi } from 'vitest'
 import App from './App'
 
 vi.mock('@/lib/api', () => ({
-  getHealth: vi.fn().mockResolvedValue({ status: 'ok' }),
-  getMeetingTypes: vi
+  unwrap: (promise: Promise<unknown>) => promise,
+  health: vi.fn().mockResolvedValue({ status: 'ok' }),
+  listMeetingTypes: vi
     .fn()
     .mockResolvedValue([
-      { id: 'call', name: 'Звонок', durationMinutes: 30 },
+      {
+        id: 'call',
+        name: 'Звонок',
+        description: 'Короткий звонок.',
+        durationMinutes: 30,
+      },
     ]),
   getAvailability: vi.fn().mockResolvedValue([]),
-  getSlots: vi.fn().mockResolvedValue([]),
+  listSlots: vi.fn().mockResolvedValue([]),
   createBooking: vi.fn(),
-  getUpcomingBookings: vi.fn().mockResolvedValue([]),
+  listBookings: vi.fn().mockResolvedValue([]),
+  createMeetingType: vi.fn(),
 }))
 
 describe('home page', () => {

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-import { getHealth } from '@/lib/api'
+import { health, unwrap } from '@/lib/api'
 
 export type ApiHealthStatus = 'checking' | 'ok' | 'error'
 
@@ -10,7 +10,7 @@ export function useApiHealth(): ApiHealthStatus {
   useEffect(() => {
     const controller = new AbortController()
 
-    getHealth(controller.signal)
+    unwrap(health({ signal: controller.signal }))
       .then(() => setStatus('ok'))
       .catch(() => {
         if (!controller.signal.aborted) {

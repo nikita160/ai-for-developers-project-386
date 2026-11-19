@@ -1,75 +1,35 @@
+import { client } from './generated/client.gen'
 import { ApiError } from '../errors'
-import { createApiClient } from './client'
-import type { components } from './schema'
-
-export type MeetingType = components['schemas']['MeetingType']
-export type AvailabilityDay = components['schemas']['AvailabilityDay']
-export type Slot = components['schemas']['Slot']
-export type Booking = components['schemas']['Booking']
-export type BookingRequest = components['schemas']['BookingRequest']
 
 // Development: Vite proxies `/api`. Production: the API and the SPA share an
 // origin, so relative paths reach the same server.
-export const api = createApiClient(
-  import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.DEV ? '/api' : ''),
-)
+client.setConfig({
+  baseUrl:
+    import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.DEV ? '/api' : ''),
+})
 
-export async function getHealth(signal?: AbortSignal) {
-  return unwrap(await api.GET('/health', { signal }))
-}
+// Типы и функции вызова генерируются из OpenAPI-контракта (@hey-api/openapi-ts).
+export * from './generated/sdk.gen'
+export * from './generated/types.gen'
 
-export async function getMeetingTypes(signal?: AbortSignal) {
-  return unwrap(await api.GET('/meeting-types', { signal }))
-}
-
-export async function getAvailability(typeId: string, signal?: AbortSignal) {
-  return unwrap(
-    await api.GET('/availability', {
-      params: { query: { type: typeId } },
-      signal,
-    }),
-  )
-}
-
-export async function getSlots(
-  typeId: string,
-  date: string,
-  signal?: AbortSignal,
-) {
-  return unwrap(
-    await api.GET('/slots', {
-      params: { query: { type: typeId, date } },
-      signal,
-    }),
-  )
-}
-
-export async function createBooking(input: BookingRequest) {
-  return unwrap(await api.POST('/bookings', { body: input }))
-}
-
-export async function getUpcomingBookings(signal?: AbortSignal) {
-  return unwrap(
-    await api.GET('/bookings', {
-      params: { query: { upcoming: true } },
-      signal,
-    }),
-  )
-}
-
-async function unwrap<T>(result: {
+type SdkResult<T> = {
   data?: T
   error?: unknown
-  response: Response
-}): Promise<T> {
-  if (result.error || result.data === undefined) {
-    throw toApiError(result.error, result.response)
-  }
-
-  return result.data
+  response?: Response
 }
 
-function toApiError(error: unknown, response: Response) {
+/** Возвращает данные ответа или бросает `ApiError`, нормализуя тело ошибки API. */
+export async function unwrap<T>(result: Promise<SdkResult<T>>): Promise<T> {
+  const { data, error, response } = await result
+
+  if (error || data === undefined) {
+    throw toApiError(error, response)
+  }
+
+  return data
+}
+
+function toApiError(error: unknown, response?: Response) {
   const body = error as
     | {
         error?: {
@@ -82,7 +42,7 @@ function toApiError(error: unknown, response: Response) {
 
   return new ApiError(
     body?.error?.message ?? 'Не удалось выполнить запрос',
-    response.status,
+    response?.status ?? 0,
     body?.error?.code,
     body?.error?.details,
   )

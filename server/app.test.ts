@@ -6,9 +6,8 @@ import Ajv from 'ajv'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { parse } from 'yaml'
 
-import { createApiClient } from '../src/lib/api/client'
 import { createApp } from './app'
-import { InMemoryBookingStore } from './store'
+import { InMemoryBookingStore, InMemoryMeetingTypeStore } from './store'
 
 type OpenApiSpec = {
   paths: Record<string, unknown>
@@ -21,13 +20,15 @@ const NOW = new Date('2026-11-17T10:00:00+03:00')
 let server: ReturnType<typeof serve>
 let baseUrl: string
 let store: InMemoryBookingStore
+let meetingTypes: InMemoryMeetingTypeStore
 let spec: OpenApiSpec
 
 beforeAll(async () => {
   spec = parse(await readFile(CONTRACT_URL, 'utf8')) as OpenApiSpec
   store = new InMemoryBookingStore()
+  meetingTypes = new InMemoryMeetingTypeStore()
 
-  const app = createApp({ store, now: () => NOW })
+  const app = createApp({ store, meetingTypes, now: () => NOW })
 
   await new Promise<void>((resolve) => {
     server = serve({ fetch: app.fetch, port: 0 }, (info) => {
@@ -39,6 +40,7 @@ beforeAll(async () => {
 
 beforeEach(() => {
   store.clear()
+  meetingTypes.reset()
 })
 
 afterAll(() => {
@@ -68,6 +70,14 @@ function postBooking(body: unknown) {
   })
 }
 
+function postMeetingType(body: unknown) {
+  return fetch(`${baseUrl}/meeting-types`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+}
+
 const validBooking = {
   typeId: 'call',
   start: '2026-11-18T09:00:00+03:00',
@@ -81,14 +91,6 @@ describe('smoke', () => {
 
     expect(response.status).toBe(200)
     expect(body).toEqual({ status: 'ok' })
-  })
-
-  it('responds through the generated SDK client', async () => {
-    const client = createApiClient(baseUrl)
-    const { data, response } = await client.GET('/health')
-
-    expect(response.status).toBe(200)
-    expect(data).toEqual({ status: 'ok' })
   })
 })
 
@@ -117,6 +119,82 @@ describe('meeting types', () => {
     expect(response.status).toBe(200)
     expect(body).toHaveLength(2)
     body.forEach((item: unknown) => validateAgainstContract('MeetingType', item))
+  })
+
+  it('lets the owner create a type that the guest can book', async () => {
+    const create = await postMeetingType({
+      name: 'Ревью',
+      description: 'Разбор кода и рекомендации.',
+      durationMinutes: 45,
+    })
+
+    expect(create.status).toBe(201)
+    const created = (await create.json()) as {
+      id: string
+      name: string
+      description: string
+      durationMinutes: number
+    }
+    validateAgainstContract('MeetingType', created)
+    expect(created.durationMinutes).toBe(45)
+
+    const { body: list } = await getJson<Array<{ id: string }>>('/meeting-types')
+
+    expect(list.map((item) => item.id)).toContain(created.id)
+
+    const { body: days } = await getJson<
+      Array<{ date: string; freeStarts: number }>
+    >(`/availability?type=${created.id}`)
+
+    expect(days[0]?.freeStarts).toBeGreaterThan(0)
+
+    const { body: slots } = await getJson<
+      Array<{ start: string; available: boolean }>
+    >(`/slots?type=${created.id}&date=${days[0].date}`)
+
+    const free = slots.find((slot) => slot.available)
+    expect(free).toBeDefined()
+
+    const booking = await postBooking({
+      typeId: created.id,
+      start: free?.start,
+      name: 'Гость',
+      email: 'guest@example.com',
+    })
+
+    expect(booking.status).toBe(201)
+  })
+
+  it('rejects an invalid meeting type', async () => {
+    const response = await postMeetingType({
+      name: '',
+      description: 'Без названия',
+      durationMinutes: 30,
+    })
+
+    expect(response.status).toBe(400)
+    const body = await response.json()
+
+    expect(body).toEqual({
+      error: expect.objectContaining({ code: 'validation_error' }),
+    })
+    validateAgainstContract('ErrorResponse', body)
+  })
+
+  it('rejects a malformed meeting type body', async () => {
+    const response = await fetch(`${baseUrl}/meeting-types`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: '{"name":',
+    })
+
+    expect(response.status).toBe(400)
+    const body = await response.json()
+
+    expect(body).toEqual({
+      error: expect.objectContaining({ code: 'validation_error' }),
+    })
+    validateAgainstContract('ErrorResponse', body)
   })
 })
 

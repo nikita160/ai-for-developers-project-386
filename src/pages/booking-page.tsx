@@ -9,8 +9,9 @@ import { Input } from '@/components/ui/input'
 import {
   createBooking,
   getAvailability,
-  getMeetingTypes,
-  getSlots,
+  listMeetingTypes,
+  listSlots,
+  unwrap,
   type AvailabilityDay,
   type MeetingType,
   type Slot,
@@ -60,7 +61,7 @@ export function BookingPage({ onBack }: BookingPageProps) {
   useEffect(() => {
     const controller = new AbortController()
 
-    getMeetingTypes(controller.signal)
+    unwrap(listMeetingTypes({ signal: controller.signal }))
       .then((list) => {
         setTypes(list)
         setTypeId((current) => current || list[0]?.id || '')
@@ -81,7 +82,12 @@ export function BookingPage({ onBack }: BookingPageProps) {
 
     const controller = new AbortController()
 
-    getAvailability(typeId, controller.signal)
+    unwrap(
+      getAvailability({
+        query: { type: typeId },
+        signal: controller.signal,
+      }),
+    )
       .then((days) => {
         setAvailability(days)
 
@@ -107,7 +113,12 @@ export function BookingPage({ onBack }: BookingPageProps) {
     const controller = new AbortController()
 
     setIsSlotsLoading(true)
-    getSlots(typeId, date, controller.signal)
+    unwrap(
+      listSlots({
+        query: { type: typeId, date },
+        signal: controller.signal,
+      }),
+    )
       .then(setSlots)
       .catch((cause) => {
         if (!controller.signal.aborted) {
@@ -172,17 +183,25 @@ export function BookingPage({ onBack }: BookingPageProps) {
     setError(null)
 
     try {
-      await createBooking({
-        typeId,
-        start: slot.start,
-        name,
-        email,
-      })
+      await unwrap(
+        createBooking({
+          body: {
+            typeId,
+            start: slot.start,
+            name,
+            email,
+          },
+        }),
+      )
       setStep('done')
 
       if (date) {
-        getAvailability(typeId).then(setAvailability).catch(() => {})
-        getSlots(typeId, date).then(setSlots).catch(() => {})
+        unwrap(getAvailability({ query: { type: typeId } }))
+          .then(setAvailability)
+          .catch(() => {})
+        unwrap(listSlots({ query: { type: typeId, date } }))
+          .then(setSlots)
+          .catch(() => {})
       }
     } catch (cause) {
       setError(errorMessage(cause))

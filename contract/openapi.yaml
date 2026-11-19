@@ -112,6 +112,31 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/MeetingType'
+    post:
+      operationId: createMeetingType
+      description: |-
+        Создание типа встречи владельцем. Новый тип сразу доступен гостю: его можно
+        выбрать на странице записи, а его свободные слоты занимаются обычным образом.
+      parameters: []
+      responses:
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeetingType'
+        '400':
+          description: The server could not understand the request due to invalid syntax.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MeetingTypeRequest'
   /slots:
     get:
       operationId: listSlots
@@ -245,17 +270,36 @@ components:
       required:
         - id
         - name
+        - description
         - durationMinutes
       properties:
         id:
           type: string
         name:
           type: string
+        description:
+          type: string
+          description: Короткое описание формата встречи; поясняет, для чего она нужна.
         durationMinutes:
           type: integer
           format: int32
           description: Длительность встречи в минутах; задаёт длину слота и шаг доступных стартов.
       description: Тип встречи с фиксированной длительностью.
+    MeetingTypeRequest:
+      type: object
+      required:
+        - name
+        - description
+        - durationMinutes
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        durationMinutes:
+          type: integer
+          format: int32
+      description: Запрос владельца на создание типа встречи.
     MoscowDateTime:
       type: string
       pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+03:00$

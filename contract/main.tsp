@@ -22,7 +22,16 @@ model HealthStatus {
 model MeetingType {
   id: string;
   name: string;
+  /** Короткое описание формата встречи; поясняет, для чего она нужна. */
+  description: string;
   /** Длительность встречи в минутах; задаёт длину слота и шаг доступных стартов. */
+  durationMinutes: int32;
+}
+
+/** Запрос владельца на создание типа встречи. */
+model MeetingTypeRequest {
+  name: string;
+  description: string;
   durationMinutes: int32;
 }
 
@@ -75,6 +84,11 @@ model CreatedBooking {
   @body booking: Booking;
 }
 
+model CreatedMeetingType {
+  @statusCode statusCode: 201;
+  @body meetingType: MeetingType;
+}
+
 model BadRequestResponse {
   @statusCode statusCode: 400;
   @body body: ErrorResponse;
@@ -94,6 +108,16 @@ op health(): HealthStatus;
 @route("/meeting-types")
 @get
 op listMeetingTypes(): MeetingType[];
+
+/**
+ * Создание типа встречи владельцем. Новый тип сразу доступен гостю: его можно
+ * выбрать на странице записи, а его свободные слоты занимаются обычным образом.
+ */
+@route("/meeting-types")
+@post
+op createMeetingType(
+  @body request: MeetingTypeRequest,
+): CreatedMeetingType | BadRequestResponse;
 
 /**
  * Доступность на 14 календарных дней окна записи, начиная с завтрашнего дня

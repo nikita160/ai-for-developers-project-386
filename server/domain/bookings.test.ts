@@ -9,11 +9,11 @@ import {
   overlaps,
   type Booking,
 } from './bookings'
-import { findMeetingType } from './meeting-types'
+import { findMeetingType, SEED_MEETING_TYPES } from './meeting-types'
 
 const NOW = new Date('2026-11-17T10:00:00+03:00')
-const call = findMeetingType('call')!
-const consultation = findMeetingType('consultation')!
+const call = findMeetingType(SEED_MEETING_TYPES, 'call')!
+const consultation = findMeetingType(SEED_MEETING_TYPES, 'consultation')!
 
 function at(date: string, time: string) {
   return new Date(`${date}T${time}:00+03:00`)

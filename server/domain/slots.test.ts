@@ -1,18 +1,30 @@
 import { describe, expect, it } from 'vitest'
 
-import { findMeetingType, MEETING_TYPES } from './meeting-types'
+import { findMeetingType, SEED_MEETING_TYPES } from './meeting-types'
 import { getSlotStarts, getWindowDates } from './slots'
 
 const NOW = new Date('2026-11-17T10:00:00+03:00')
 
 describe('meeting types', () => {
   it('exposes the call and consultation durations', () => {
-    expect(MEETING_TYPES).toEqual([
-      { id: 'call', name: 'Звонок', durationMinutes: 30 },
-      { id: 'consultation', name: 'Консультация', durationMinutes: 60 },
+    expect(SEED_MEETING_TYPES).toEqual([
+      {
+        id: 'call',
+        name: 'Звонок',
+        description: 'Короткий звонок, чтобы быстро разобрать один вопрос.',
+        durationMinutes: 30,
+      },
+      {
+        id: 'consultation',
+        name: 'Консультация',
+        description: 'Развёрнутая консультация с погружением в задачу.',
+        durationMinutes: 60,
+      },
     ])
-    expect(findMeetingType('consultation')?.durationMinutes).toBe(60)
-    expect(findMeetingType('unknown')).toBeUndefined()
+    expect(
+      findMeetingType(SEED_MEETING_TYPES, 'consultation')?.durationMinutes,
+    ).toBe(60)
+    expect(findMeetingType(SEED_MEETING_TYPES, 'unknown')).toBeUndefined()
   })
 })
 
@@ -28,7 +40,11 @@ describe('booking window', () => {
 
 describe('slot starts', () => {
   it('generates 30-minute starts for a call inside working hours', () => {
-    const starts = getSlotStarts('2026-11-18', findMeetingType('call')!, NOW)
+    const starts = getSlotStarts(
+      '2026-11-18',
+      findMeetingType(SEED_MEETING_TYPES, 'call')!,
+      NOW,
+    )
 
     expect(starts).toHaveLength(18)
     expect(starts[0]).toEqual({
@@ -43,7 +59,7 @@ describe('slot starts', () => {
   it('fits a consultation entirely inside working hours', () => {
     const starts = getSlotStarts(
       '2026-11-18',
-      findMeetingType('consultation')!,
+      findMeetingType(SEED_MEETING_TYPES, 'consultation')!,
       NOW,
     )
 
@@ -55,7 +71,7 @@ describe('slot starts', () => {
   })
 
   it('returns no starts outside the booking window', () => {
-    const call = findMeetingType('call')!
+    const call = findMeetingType(SEED_MEETING_TYPES, 'call')!
 
     expect(getSlotStarts('2026-11-17', call, NOW)).toEqual([])
     expect(getSlotStarts('2026-12-02', call, NOW)).toEqual([])

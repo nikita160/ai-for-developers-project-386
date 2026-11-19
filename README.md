@@ -15,7 +15,7 @@
 - TypeScript, React 19, Vite 8
 - shadcn/ui, Tailwind CSS 4
 - Hono + `@hono/node-server` (API)
-- TypeSpec → OpenAPI → типизированный клиент (`openapi-fetch`)
+- TypeSpec → OpenAPI → типизированный SDK (`@hey-api/openapi-ts`: типы и функции вызова)
 - Vitest, oxlint
 - mise (версии, задачи, daemons), hk (git-хуки), GitHub Actions
 
@@ -51,7 +51,7 @@ mise run test:e2e                # браузерный сценарий про�
 Контракт API и клиентский SDK генерируются из TypeSpec:
 
 ```bash
-mise run contract        # contract/openapi.yaml + src/lib/api/schema.d.ts
+mise run contract        # contract/openapi.yaml + src/lib/api/generated (типы и функции вызова)
 mise run contract:check  # проверить, что генерация не даёт диффа
 ```
 

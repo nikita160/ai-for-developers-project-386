@@ -1,4 +1,5 @@
 import type { Booking, Slot } from './domain/bookings'
+import type { MeetingType } from './domain/meeting-types'
 import { formatMoscowIso } from './domain/time'
 
 export function serializeBooking(booking: Booking) {
@@ -10,6 +11,15 @@ export function serializeBooking(booking: Booking) {
     name: booking.name,
     email: booking.email,
     createdAt: booking.createdAt.toISOString(),
+  }
+}
+
+export function serializeMeetingType(type: MeetingType) {
+  return {
+    id: type.id,
+    name: type.name,
+    description: type.description,
+    durationMinutes: type.durationMinutes,
   }
 }
 
