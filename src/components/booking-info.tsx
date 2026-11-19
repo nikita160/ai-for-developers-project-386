@@ -1,12 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import type { MeetingType, Slot } from '@/lib/api'
 import { formatDateLabel, formatSlotRange } from '@/lib/booking'
+import { cn } from '@/lib/utils'
 
 type BookingInfoProps = {
   type: MeetingType | null
   date: string | null
   slot: Slot | null
   freeCount: number | null
+  className?: string
 }
 
 function InfoRow({ label, value }: { label: string; value: string }) {
@@ -18,9 +20,15 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   )
 }
 
-export function BookingInfo({ type, date, slot, freeCount }: BookingInfoProps) {
+export function BookingInfo({
+  type,
+  date,
+  slot,
+  freeCount,
+  className,
+}: BookingInfoProps) {
   return (
-    <Card className="h-fit [--card-spacing:--spacing(5)]">
+    <Card className={cn('h-fit [--card-spacing:--spacing(5)]', className)}>
       <CardHeader>
         <CardTitle className="text-base font-semibold">Информация</CardTitle>
       </CardHeader>

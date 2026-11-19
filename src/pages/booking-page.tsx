@@ -6,6 +6,7 @@ import { SlotList } from '@/components/slot-list'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   createBooking,
   getAvailability,
@@ -268,9 +269,10 @@ export function BookingPage({ onBack }: BookingPageProps) {
               date={date}
               slot={slot}
               freeCount={freeCount}
+              className="order-2 lg:order-1"
             />
 
-            <Card className="[--card-spacing:--spacing(5)]">
+            <Card className="order-1 lg:order-2 [--card-spacing:--spacing(5)]">
               <CardContent>
                 <MonthCalendar
                   month={month}
@@ -282,7 +284,7 @@ export function BookingPage({ onBack }: BookingPageProps) {
               </CardContent>
             </Card>
 
-            <Card className="h-fit [--card-spacing:--spacing(5)]">
+            <Card className="order-3 h-fit [--card-spacing:--spacing(5)]">
               <CardHeader>
                 <CardTitle className="text-base font-semibold">
                   Статус слотов
@@ -363,7 +365,9 @@ export function BookingPage({ onBack }: BookingPageProps) {
                 className="flex flex-col gap-3"
               >
                 <div className="flex flex-col gap-1">
+                  <Label htmlFor="booking-name">Имя</Label>
                   <Input
+                    id="booking-name"
                     value={name}
                     onChange={(event) => {
                       setName(event.target.value)
@@ -390,7 +394,9 @@ export function BookingPage({ onBack }: BookingPageProps) {
                   ) : null}
                 </div>
                 <div className="flex flex-col gap-1">
+                  <Label htmlFor="booking-email">Email</Label>
                   <Input
+                    id="booking-email"
                     type="email"
                     value={email}
                     onChange={(event) => {
